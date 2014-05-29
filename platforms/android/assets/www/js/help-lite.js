@@ -1,4 +1,6 @@
 ;(function($, window, document, undefined) {
+        var baseUrl = "http://www.destiny.gg";
+
 	var urlParseRE = /^\s*(((([^:\/#\?]+:)?(?:(\/\/)((?:(([^:@\/#\?]+)(?:\:([^:@\/#\?]+))?)@)?(([^:\/#\?\]\[]+|\[[^\/\]@#?]+\])(?:\:([0-9]+))?))?)?)?((\/?(?:[^\/\?#]+\/+)*)([^\?#]*)))?(\?[^#]+)?)(#.*)?/;
 	
 	//Parse a URL into a structure that allows easy access to
@@ -147,6 +149,31 @@
 		content.find("script[src]").detach();
 		//console.debug(content.html());
 		//$(document.body).empty();
+
+                //rewrite relative links to absolute
+                content.find("a[href]").each(function() {
+                    var href = $(this).attr("href");
+                    if ( href.search( "#" ) !== -1 ) {
+                        href = href.replace( /[^#]*#/, "" );
+                        if ( !href ) {
+                            //link was an empty hash meant purely
+                            //for interaction, so we ignore it.
+                            return;
+                        } else if ( !isPath( href ) ) {
+                            //we have a simple id so use the documentUrl as its base.
+                            href = makeUrlAbsolute( "#" + href, baseUrl );
+                        }
+                    }
+
+                    if ( isPath( href ) ) {
+                        //we have a path so make it the href we want to load.
+                        href = makeUrlAbsolute( href, baseUrl );
+                    }
+
+                    $(this).attr("href", href);
+                    //console.debug("rewrite: " + href);
+                });
+
 		content.prependTo(document.body);
 	};
 	
@@ -191,30 +218,29 @@
 				return;
 			}
 			
-			var baseUrl = "http://www.destiny.gg";
 			var href = makeUrlAbsolute( $link.attr( "href" ) || "#", baseUrl );
-			
-			if ( href.search( "#" ) !== -1 ) {
-				href = href.replace( /[^#]*#/, "" );
-				if ( !href ) {
-					//link was an empty hash meant purely
-					//for interaction, so we ignore it.
-					event.preventDefault();
-					return;
-				} else if ( isPath( href ) ) {
-					//we have a path so make it the href we want to load.
-					href = makeUrlAbsolute( href, baseUrl );
-				} else {
-					//we have a simple id so use the documentUrl as its base.
-					href = makeUrlAbsolute( "#" + href, baseUrl );
-				}
-			}
-			
-			var domain = parseUrl(href).domain;
-			
+
+                        if ( href.search( "#" ) !== -1 ) {
+                            href = href.replace( /[^#]*#/, "" );
+                            if ( !href ) {
+                                //link was an empty hash meant purely
+                                //for interaction, so we ignore it.
+                                event.preventDefault();
+                                return;
+                            } else if ( isPath( href ) ) {
+                                //we have a path so make it the href we want to load.
+                                href = makeUrlAbsolute( href, baseUrl );
+                            } else {
+                                //we have a simple id so use the documentUrl as its base.
+                                href = makeUrlAbsolute( "#" + href, baseUrl );
+                            }
+                        }
+
+                        var hostname = parseUrl(href).hostname;
+
 			// Should we handle this link, or let the browser deal with it?
 			//var useDefaultUrlHandling = $link.is( "[rel='external']" ) || $link.is( "[target]" );
-			var useInAppBrowser = /destiny.gg$/.test(domain);
+			var useInAppBrowser = /destiny.gg$/.test(hostname);
 			var target = useInAppBrowser ? "_blank" : "_system";
 			
 			var iab = window.open(href, target);

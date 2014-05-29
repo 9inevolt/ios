@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="gg.destiny.app.chat" version="0.1" xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0">
+<widget id="gg.destiny.app.chat" version="0.2" xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0">
     <name>Destiny Chat</name>
     <description>
         Chat app for Destiny.gg
@@ -7,8 +7,10 @@
 
     <access origin="http://127.0.0.1*" />
     <access origin="*://*.destiny.gg/*" subdomains="true" />
-    <!-- <access origin="10.0.3.2:*" />
-    <access origin="*" /> -->
+    <!-- <access origin="*" /> -->
+
+    <!-- weinre debugger -->
+    <!-- <access origin="10.0.3.2:*" /> -->
 
     <content src="http://www.destiny.gg/embed/chat" />
 
