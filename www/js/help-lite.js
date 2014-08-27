@@ -270,6 +270,7 @@
 		$.ajax({
 			url: url,
 			type: "get",
+			cache: false,
 			data: null,
 			contentType: null,
 			dataType: "html",
