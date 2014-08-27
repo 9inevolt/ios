@@ -1,5 +1,7 @@
 package gg.destiny.app.chat;
 
+import gg.destiny.app.viewer.R;
+
 import java.util.concurrent.*;
 
 import org.apache.cordova.*;

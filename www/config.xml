@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="gg.destiny.app.chat" version="0.3" xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0">
-    <name>Destiny Chat</name>
+<widget id="gg.destiny.app.viewer" version="0.1" xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0">
+    <name>Destiny</name>
     <description>
-        Chat app for Destiny.gg
+        Chat and viewer app for Destiny.gg
     </description>
 
     <access origin="http://127.0.0.1*" />
