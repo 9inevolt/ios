@@ -1,33 +1,55 @@
 package gg.destiny.app.chat;
 
-import gg.destiny.app.viewer.R;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.cordova.*;
 
+import gg.destiny.app.fragments.PlayerFragment;
+import gg.destiny.app.viewer.R;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
+import android.view.View;
 
-public class ChatActivity extends Activity implements CordovaInterface
+public class PlayerActivity extends FragmentActivity implements CordovaInterface
 {
-    public static String TAG = "ChatActivity";
+    public static final String TAG = "PlayerActivity";
     private final ExecutorService threadPool = Executors.newCachedThreadPool();
     CordovaWebView webView;
+    private PlayerFragment player;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState)
+    protected void onCreate(Bundle bundle)
     {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.chat);
+        super.onCreate(bundle);
+
+        setContentView(R.layout.player);
+
+        player = (PlayerFragment) getSupportFragmentManager().findFragmentByTag(getString(R.string.player_fragment));
+
         Config.init(this);
         webView = (CordovaWebView) findViewById(R.id.web_view);
         //webView.loadUrl(Config.getStartUrl());
-        //webView.loadUrl("file:///android_asset/www/chat2.html");
         webView.loadUrl("file:///android_asset/www/chat-lite.html");
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration config)
+    {
+        super.onConfigurationChanged(config);
+
+        if (config.orientation == Configuration.ORIENTATION_LANDSCAPE && player.isInPlaybackState()) {
+            player.doFullScreen(true, false);
+            webView.setVisibility(View.GONE);
+        } else if (config.orientation == Configuration.ORIENTATION_PORTRAIT) {
+            player.doFullScreen(false, false);
+            webView.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -66,5 +88,4 @@ public class ChatActivity extends Activity implements CordovaInterface
     {
         return threadPool;
     }
-
 }
