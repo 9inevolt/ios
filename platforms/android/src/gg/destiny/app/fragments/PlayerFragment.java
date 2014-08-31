@@ -1,15 +1,18 @@
 package gg.destiny.app.fragments;
 
+import gg.destiny.app.chat.R;
+import gg.destiny.app.chat.App;
 import gg.destiny.app.parsers.extm3uParser;
 import gg.destiny.app.parsers.extm3u.*;
+import gg.destiny.app.preference.QualityPreferenceChangeListener;
+import gg.destiny.app.preference.QualityPreferenceHelper;
 import gg.destiny.app.util.KrakenApi;
 import gg.destiny.app.util.KrakenApi.ChannelAccessToken;
-import gg.destiny.app.viewer.R;
 import gg.destiny.app.widget.FullMediaController;
 import gg.destiny.app.widget.FullMediaPlayerControl;
 
 import java.io.IOException;
-import java.util.Map;
+import java.util.*;
 
 import android.content.pm.ActivityInfo;
 import android.media.*;
@@ -18,16 +21,17 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.util.ArrayMap;
 import android.util.Log;
 import android.view.*;
 import android.view.SurfaceHolder.Callback;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 public class PlayerFragment extends Fragment implements Callback, OnErrorListener, OnPreparedListener,
-        OnVideoSizeChangedListener, OnCompletionListener, FullMediaPlayerControl, OnTouchListener
+        OnVideoSizeChangedListener, OnCompletionListener, FullMediaPlayerControl, OnTouchListener,
+        QualityPreferenceChangeListener
 {
     enum State {
         ERROR, IDLE, PREPARING, PREPARED, PLAYING, PAUSED, COMPLETE
@@ -40,18 +44,23 @@ public class PlayerFragment extends Fragment implements Callback, OnErrorListene
     private SurfaceView surface = null;
     private SurfaceHolder holder = null;
     private FullMediaController controls = null;
+    private String preferredQuality;
     private Uri playUri = null;
     private boolean fullScreen = false;
     private boolean orientationLocked = false;
     private State state = State.IDLE;
     private extm3u masterPlaylist;
-    private Map<String, StreamInfo> qualityMap = new ArrayMap<String, StreamInfo>();
+    private Map<String, StreamInfo> qualityMap = new LinkedHashMap<String, StreamInfo>();
 
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
+
+        QualityPreferenceHelper helper = App.getQualityPreferenceHelper();
+        preferredQuality = helper.getPreferenceValue();
+        helper.addListener(this);
     }
 
     @Override
@@ -237,15 +246,6 @@ public class PlayerFragment extends Fragment implements Callback, OnErrorListene
     }
 
     @Override
-    public boolean onTouch(View v, MotionEvent event)
-    {
-        if (isInPlaybackState() && controls != null) {
-            toggleControlsVisibility();
-        }
-        return false;
-    }
-
-    @Override
     public boolean isFullScreen()
     {
         return fullScreen;
@@ -255,6 +255,22 @@ public class PlayerFragment extends Fragment implements Callback, OnErrorListene
     public void fullScreen(boolean full)
     {
         doFullScreen(full, true);
+    }
+
+    @Override
+    public void doSettings()
+    {
+        App.getQualityPreferenceHelper().showDialog(getActivity(),
+            new ArrayList<String>(qualityMap.keySet()));
+    }
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event)
+    {
+        if (isInPlaybackState() && controls != null) {
+            toggleControlsVisibility();
+        }
+        return false;
     }
 
     public boolean isInPlaybackState()
@@ -300,6 +316,14 @@ public class PlayerFragment extends Fragment implements Callback, OnErrorListene
                 }
             }, 500);
         }
+    }
+
+    @Override
+    public void onQualityPreferenceChanged(String quality)
+    {
+        preferredQuality = quality;
+        if (isInPlaybackState())
+            playQuality(quality);
     }
 
     private void toggleControlsVisibility() {
@@ -353,8 +377,11 @@ public class PlayerFragment extends Fragment implements Callback, OnErrorListene
             Log.d(TAG, "other stream: " + s.video);
         }
 
-        boolean played = playQuality("mobile") || playQuality("low") || playQuality("medium")
-            || playQuality("high") || playQuality("source");
+        if (!playQuality(preferredQuality)) {
+            Toast.makeText(getActivity(),
+                "Preferred quality \"" + preferredQuality + "\" is not available. " +
+                "Please select another quality.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private boolean playQuality(String quality) {

@@ -1,6 +1,7 @@
 package gg.destiny.app.widget;
 
-import gg.destiny.app.viewer.R;
+import gg.destiny.app.chat.R;
+import gg.destiny.app.widget.FullMediaPlayerControl;
 import android.content.Context;
 import android.os.*;
 import android.os.Handler.Callback;
@@ -21,6 +22,7 @@ public class FullMediaController extends FrameLayout implements View.OnClickList
     private FullMediaPlayerControl mPlayer;
     private ImageButton mPauseButton;
     private ImageButton mFullScreenButton;
+    private ImageButton mSettingsButton;
     private Handler handler;
 
     public FullMediaController(Context context) {
@@ -114,6 +116,10 @@ public class FullMediaController extends FrameLayout implements View.OnClickList
                 break;
             case R.id.full_screen_button:
                 doToggleFullScreen();
+                break;
+            case R.id.settings_button:
+                doSettings();
+                break;
         }
     }
 
@@ -142,6 +148,11 @@ public class FullMediaController extends FrameLayout implements View.OnClickList
         mFullScreenButton = (ImageButton) v.findViewById(R.id.full_screen_button);
         if (mFullScreenButton != null) {
             mFullScreenButton.setOnClickListener(this);
+        }
+
+        mSettingsButton = (ImageButton) v.findViewById(R.id.settings_button);
+        if (mSettingsButton != null) {
+            mSettingsButton.setOnClickListener(this);
         }
     }
 
@@ -185,5 +196,12 @@ public class FullMediaController extends FrameLayout implements View.OnClickList
 
         mPlayer.fullScreen(!mPlayer.isFullScreen());
         updateFullScreen();
+    }
+
+    private void doSettings() {
+        if (mPlayer == null)
+            return;
+
+        mPlayer.doSettings();
     }
 }

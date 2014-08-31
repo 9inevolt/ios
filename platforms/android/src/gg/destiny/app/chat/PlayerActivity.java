@@ -1,17 +1,16 @@
 package gg.destiny.app.chat;
 
+import gg.destiny.app.fragments.PlayerFragment;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.cordova.*;
 
-import gg.destiny.app.fragments.PlayerFragment;
-import gg.destiny.app.viewer.R;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.View;
@@ -50,6 +49,16 @@ public class PlayerActivity extends FragmentActivity implements CordovaInterface
             player.doFullScreen(false, false);
             webView.setVisibility(View.VISIBLE);
         }
+    }
+
+    @Override
+    protected void onDestroy()
+    {
+        if (webView != null) {
+            webView.removeAllViews();
+            webView.handleDestroy();
+        }
+        super.onDestroy();
     }
 
     @Override
