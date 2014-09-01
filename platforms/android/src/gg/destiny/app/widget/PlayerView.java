@@ -303,8 +303,8 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
     }
 
     private void initVideoView() {
-        mVideoWidth = 0;
-        mVideoHeight = 0;
+        mVideoWidth = 16;
+        mVideoHeight = 9;
         getHolder().addCallback(callback);
         setFocusable(true);
         setFocusableInTouchMode(true);
