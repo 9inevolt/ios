@@ -3,6 +3,7 @@ package gg.destiny.app.widget;
 import gg.destiny.app.chat.R;
 import gg.destiny.app.widget.FullMediaPlayerControl;
 import android.content.Context;
+import android.media.MediaPlayer;
 import android.os.*;
 import android.os.Handler.Callback;
 import android.util.Log;
@@ -203,5 +204,14 @@ public class FullMediaController extends FrameLayout implements View.OnClickList
             return;
 
         mPlayer.doSettings();
+    }
+
+    public interface OnFullScreenListener
+    {
+        /**
+         * @param mp        the MediaPlayer associated with this callback
+         * @param full      true if full screen requested
+         */
+        public void onFullScreen(MediaPlayer mp, boolean full);
     }
 }

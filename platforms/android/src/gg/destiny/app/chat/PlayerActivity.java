@@ -1,6 +1,7 @@
 package gg.destiny.app.chat;
 
 import gg.destiny.app.fragments.PlayerFragment;
+import gg.destiny.app.widget.FullMediaController.OnFullScreenListener;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -9,13 +10,15 @@ import org.apache.cordova.*;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.View;
 
-public class PlayerActivity extends FragmentActivity implements CordovaInterface
+public class PlayerActivity extends FragmentActivity implements CordovaInterface, OnFullScreenListener
 {
     public static final String TAG = "PlayerActivity";
     private final ExecutorService threadPool = Executors.newCachedThreadPool();
@@ -30,6 +33,7 @@ public class PlayerActivity extends FragmentActivity implements CordovaInterface
         setContentView(R.layout.player);
 
         player = (PlayerFragment) getSupportFragmentManager().findFragmentByTag(getString(R.string.player_fragment));
+        player.setOnFullScreenListener(this);
 
         Config.init(this);
         webView = (CordovaWebView) findViewById(R.id.web_view);
@@ -38,16 +42,14 @@ public class PlayerActivity extends FragmentActivity implements CordovaInterface
     }
 
     @Override
-    public void onConfigurationChanged(Configuration config)
+    public void onFullScreen(MediaPlayer mp, boolean full)
     {
-        super.onConfigurationChanged(config);
-
-        if (config.orientation == Configuration.ORIENTATION_LANDSCAPE && player.isInPlaybackState()) {
-            player.doFullScreen(true, false);
+        if (full) {
             webView.setVisibility(View.GONE);
-        } else if (config.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            player.doFullScreen(false, false);
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        } else {
             webView.setVisibility(View.VISIBLE);
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
     }
 
