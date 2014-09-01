@@ -214,4 +214,12 @@ public class FullMediaController extends FrameLayout implements View.OnClickList
          */
         public void onFullScreen(MediaPlayer mp, boolean full);
     }
+
+    public interface OnSettingsListener
+    {
+        /**
+         * @param mp        the MediaPlayer associated with this callback
+         */
+        public void onSettings(MediaPlayer mp);
+    }
 }

@@ -1,6 +1,7 @@
 package gg.destiny.app.widget;
 
 import gg.destiny.app.widget.FullMediaController.OnFullScreenListener;
+import gg.destiny.app.widget.FullMediaController.OnSettingsListener;
 
 import java.io.IOException;
 
@@ -29,6 +30,7 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
     private Uri playUri = null;
     private boolean fullScreen, userFullScreen;
     private OnFullScreenListener onFullScreenListener;
+    private OnSettingsListener onSettingsListener;
 
     public PlayerView(Context context)
     {
@@ -73,6 +75,11 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
     public void setOnFullScreenListener(OnFullScreenListener l)
     {
         onFullScreenListener = l;
+    }
+
+    public void setOnSettingsListener(OnSettingsListener l)
+    {
+        onSettingsListener = l;
     }
 
     public void stop() {
@@ -186,8 +193,9 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
     @Override
     public void doSettings()
     {
-//        App.getQualityPreferenceHelper().showDialog(getContext(),
-//            new ArrayList<String>(qualityMap.keySet()));
+        if (onSettingsListener != null) {
+            onSettingsListener.onSettings(player);
+        }
     }
 
     @Override

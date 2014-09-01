@@ -10,10 +10,12 @@ import gg.destiny.app.util.KrakenApi;
 import gg.destiny.app.util.KrakenApi.ChannelAccessToken;
 import gg.destiny.app.widget.*;
 import gg.destiny.app.widget.FullMediaController.OnFullScreenListener;
+import gg.destiny.app.widget.FullMediaController.OnSettingsListener;
 
 import java.io.IOException;
 import java.util.*;
 
+import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -22,7 +24,8 @@ import android.view.*;
 import android.view.View.OnTouchListener;
 import android.widget.Toast;
 
-public class PlayerFragment extends Fragment implements OnTouchListener, QualityPreferenceChangeListener
+public class PlayerFragment extends Fragment implements OnTouchListener,
+        QualityPreferenceChangeListener, OnSettingsListener
 {
     enum State {
         ERROR, IDLE, PREPARING, PREPARED, PLAYING, PAUSED, COMPLETE
@@ -60,6 +63,7 @@ public class PlayerFragment extends Fragment implements OnTouchListener, Quality
         super.onViewCreated(view, savedInstanceState);
         playerView = (PlayerView) view.findViewById(R.id.player_view);
         playerView.setOnFullScreenListener(onFullScreenListener);
+        playerView.setOnSettingsListener(this);
     }
 
     @Override
@@ -76,7 +80,8 @@ public class PlayerFragment extends Fragment implements OnTouchListener, Quality
         super.onStop();
     }
 
-    public void doSettings()
+    @Override
+    public void onSettings(MediaPlayer mp)
     {
         App.getQualityPreferenceHelper().showDialog(getActivity(),
             new ArrayList<String>(qualityMap.keySet()));
