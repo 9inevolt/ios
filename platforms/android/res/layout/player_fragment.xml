@@ -8,5 +8,12 @@
         android:id="@+id/player_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
+    
+    <gg.destiny.app.widget.FixedImageView
+        android:id="@+id/player_offline_image"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone" 
+        android:adjustViewBounds="true" />
 
 </FrameLayout>

@@ -2,12 +2,13 @@ package gg.destiny.app.fragments;
 
 import gg.destiny.app.chat.R;
 import gg.destiny.app.chat.App;
+import gg.destiny.app.model.Channel;
+import gg.destiny.app.model.Stream;
 import gg.destiny.app.parsers.extm3uParser;
 import gg.destiny.app.parsers.extm3u.*;
 import gg.destiny.app.preference.QualityPreferenceChangeListener;
 import gg.destiny.app.preference.QualityPreferenceHelper;
-import gg.destiny.app.util.KrakenApi;
-import gg.destiny.app.util.KrakenApi.ChannelAccessToken;
+import gg.destiny.app.util.*;
 import gg.destiny.app.widget.*;
 import gg.destiny.app.widget.FullMediaController.OnFullScreenListener;
 import gg.destiny.app.widget.FullMediaController.OnSettingsListener;
@@ -15,30 +16,43 @@ import gg.destiny.app.widget.FullMediaController.OnSettingsListener;
 import java.io.IOException;
 import java.util.*;
 
+import org.json.JSONObject;
+
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
-import android.os.AsyncTask;
-import android.os.Bundle;
+import android.media.MediaPlayer.OnCompletionListener;
+import android.os.*;
+import android.os.Handler.Callback;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.*;
 import android.view.View.OnTouchListener;
-import android.widget.Toast;
+import android.widget.*;
+import android.widget.ImageView.ScaleType;
 
 public class PlayerFragment extends Fragment implements OnTouchListener,
-        QualityPreferenceChangeListener, OnSettingsListener
+        QualityPreferenceChangeListener, OnSettingsListener, Callback, OnCompletionListener
 {
-    enum State {
-        ERROR, IDLE, PREPARING, PREPARED, PLAYING, PAUSED, COMPLETE
+    enum Status {
+        UNKNOWN, OFFLINE, ONLINE
     }
     public static final String TAG = "PlayerFragment";
-    public static final String CHANNEL = "iateyourpie";
+    public static final String DEFAULT_CHANNEL = "virlomi";
+    private static long STATUS_DELAY = 15000;
 
+    private String channel = DEFAULT_CHANNEL;
     private String preferredQuality;
 //    private Uri playUri = null;
     private extm3u masterPlaylist;
     private Map<String, StreamInfo> qualityMap = new LinkedHashMap<String, StreamInfo>();
     private PlayerView playerView = null;
+    private ImageView offlineImageView = null;
     private OnFullScreenListener onFullScreenListener;
+    private Handler statusHandler;
+    private boolean offlineImageLoaded;
+    private Status status = Status.UNKNOWN;
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -49,6 +63,7 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
         QualityPreferenceHelper helper = App.getQualityPreferenceHelper();
         preferredQuality = helper.getPreferenceValue();
         helper.addListener(this);
+        statusHandler = new Handler(this);
     }
 
     @Override
@@ -62,21 +77,34 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
     {
         super.onViewCreated(view, savedInstanceState);
         playerView = (PlayerView) view.findViewById(R.id.player_view);
+        offlineImageView = (ImageView) view.findViewById(R.id.player_offline_image);
         playerView.setOnFullScreenListener(onFullScreenListener);
         playerView.setOnSettingsListener(this);
+        playerView.setOnCompletionListener(this);
     }
 
     @Override
     public void onStart()
     {
         super.onStart();
-        new GetMasterPlaylistTask().execute(CHANNEL);
+
+        if (status == Status.ONLINE) {
+            try {
+                playerView.resume();
+            } catch (IOException e) {
+                Log.e(TAG, "error on resume", e);
+                offline();
+            }
+        } else {
+            statusHandler.post(getStreamRunnable);
+        }
     }
 
     @Override
     public void onStop()
     {
-        playerView.stop();
+        playerView.suspend();
+        statusHandler.removeCallbacks(getStreamRunnable);
         super.onStop();
     }
 
@@ -85,6 +113,12 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
     {
         App.getQualityPreferenceHelper().showDialog(getActivity(),
             new ArrayList<String>(qualityMap.keySet()));
+    }
+
+    @Override
+    public void onCompletion(MediaPlayer mp)
+    {
+        offline();
     }
 
     @Override
@@ -97,8 +131,13 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
     public void onQualityPreferenceChanged(String quality)
     {
         preferredQuality = quality;
-        if (playerView.isInPlaybackState())
-            playQuality(quality);
+        playQuality(quality);
+    }
+
+    @Override
+    public boolean handleMessage(Message msg)
+    {
+        return false;
     }
 
     public void setOnFullScreenListener(OnFullScreenListener l)
@@ -110,8 +149,10 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
 
     private void setMasterPlaylist(extm3u playlist)
     {
-        if (playlist == null)
+        if (playlist == null || playlist.media.isEmpty()) {
+            offline();
             return;
+        }
 
         masterPlaylist = playlist;
         qualityMap.clear();
@@ -125,11 +166,7 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
             Log.d(TAG, "other stream: " + s.video);
         }
 
-        if (!playQuality(preferredQuality)) {
-            Toast.makeText(getActivity(),
-                "Preferred quality \"" + preferredQuality + "\" is not available. " +
-                "Please select another quality.", Toast.LENGTH_SHORT).show();
-        }
+        online();
     }
 
     private boolean playQuality(String quality) {
@@ -150,46 +187,127 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
         playerView.start();
     }
 
+    private void tryOnline()
+    {
+        if (status == Status.ONLINE)
+            return;
+
+        new GetMasterPlaylistTask().execute(channel);
+    }
+
+    private void online()
+    {
+        if (status == Status.ONLINE && masterPlaylist != null) {
+            Log.d(TAG, channel + " still online");
+            return;
+        }
+
+        if (!playQuality(preferredQuality)) {
+            Toast.makeText(getActivity(),
+                "Preferred quality \"" + preferredQuality + "\" is not available. " +
+                "Please select another quality.", Toast.LENGTH_SHORT).show();
+        }
+
+        status = Status.ONLINE;
+        playerView.setVisibility(View.VISIBLE);
+        offlineImageView.setVisibility(View.GONE);
+        Log.d(TAG, channel + " went online");
+    }
+
+    private void offline()
+    {
+        statusHandler.postDelayed(getStreamRunnable, STATUS_DELAY);
+
+        if (status == Status.OFFLINE) {
+            Log.d(TAG, channel + " still offline");
+            return;
+        }
+
+        status = Status.OFFLINE;
+        masterPlaylist = null;
+        if (!offlineImageLoaded) {
+            offlineImageView.setImageResource(R.drawable.offline_default);
+            offlineImageView.setScaleType(ScaleType.CENTER_CROP);
+            new GetChannelTask().execute(channel);
+        }
+        playerView.setVisibility(View.GONE);
+        offlineImageView.setVisibility(View.VISIBLE);
+        Log.d(TAG, channel + " went offline");
+    }
+
+    private void setOfflineImage(Drawable d)
+    {
+        offlineImageView.setImageDrawable(d);
+        offlineImageView.setScaleType(ScaleType.CENTER_INSIDE);
+        offlineImageLoaded = true;
+    }
+
+    private class GetChannelTask extends AsyncTask<String, Void, Channel>
+    {
+        @Override
+        protected Channel doInBackground(String... params)
+        {
+            Log.d(TAG, "GetChannelTask execute");
+            try {
+                JSONObject obj = KrakenApi.getChannel(params[0]);
+                if (obj != null) {
+                    return new Channel(obj);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Kraken error", e);
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Channel channel)
+        {
+            if (playerView.isInPlaybackState()) {
+                playerView.stop();
+            }
+
+            if (channel != null && channel.getVideoBanner() != null) {
+                new DownloadImageTask() {
+                    @Override
+                    protected void onPostExecute(Bitmap bm) {
+                        setOfflineImage(new BitmapDrawable(getResources(), bm));
+                    }
+                }.execute(channel.getVideoBanner());
+            }
+        }
+    }
+
+    private Runnable getStreamRunnable = new Runnable() {
+        @Override
+        public void run()
+        {
+            new GetStreamTask() {
+                @Override
+                protected void onPostExecute(Stream stream)
+                {
+                    if (stream != null) {
+                        tryOnline();
+                    } else {
+                        offline();
+                    }
+                }
+            }.execute(channel);
+        }
+    };
+
     private class GetMasterPlaylistTask extends AsyncTask<String, Void, extm3u>
     {
         @Override
         protected extm3u doInBackground(String... params)
         {
             try {
-                ChannelAccessToken t = KrakenApi.getChannelAccessToken(params[0]);
-//                Log.d(TAG, "sig: " + t.sig + ", token: " + t.token);
-                String streams = KrakenApi.getStreams(t, params[0]);
-                Log.d(TAG, "streams: " + streams);
-//                String streams2 = KrakenApi.getStreams2(t, params[0]);
-//                Log.d(TAG, "streams2: " + streams2);
-                return extm3uParser.a(streams);
-
-            } catch (Exception e) {
-                Log.e(TAG, "Kraken error", e);
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(extm3u playlist)
-        {
-            if (playlist != null)
-            {
-                setMasterPlaylist(playlist);
-            }
-        }
-    }
-
-    private class GetPlaylistTask extends AsyncTask<String, Void, extm3u>
-    {
-        @Override
-        protected extm3u doInBackground(String... params)
-        {
-            try {
-                Log.d(TAG, "Load playlist: " + params[0] + "[" + params[1] + "]");
-                String playlist = KrakenApi.getPlaylist(params[1]);
-                Log.d(TAG, playlist);
+                String playlist = KrakenApi.getPlaylist(params[0]);
+                Log.d(TAG, "playlist: " + playlist);
+//                String playlist2 = KrakenApi.getPlaylist2(params[0]);
+//                Log.d(TAG, "playlist2: " + playlist2);
                 return extm3uParser.a(playlist);
+
             } catch (Exception e) {
                 Log.e(TAG, "Kraken error", e);
             }
@@ -199,6 +317,7 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
         @Override
         protected void onPostExecute(extm3u playlist)
         {
+            setMasterPlaylist(playlist);
         }
     }
 }

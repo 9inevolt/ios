@@ -11,33 +11,49 @@ import android.net.Uri;
 
 public final class KrakenApi
 {
+    public static final JSONObject getChannel(String channel) throws IOException, JSONException
+    {
+        String url = String.format("https://api.twitch.tv/kraken/channels/%s", channel);
+
+        return new JSONObject(getString(url));
+    }
+
+    public static final JSONObject getStream(String channel) throws IOException, JSONException
+    {
+        String url = String.format("https://api.twitch.tv/kraken/streams/%s", channel);
+
+        return new JSONObject(getString(url));
+    }
+
     public static final ChannelAccessToken getChannelAccessToken(String channel) throws IOException, JSONException
     {
         String url = String.format("http://api.twitch.tv/api/channels/%s/access_token", channel);
 
-        JSONObject jObj = new JSONObject(getPlaylist(url));
+        JSONObject jObj = new JSONObject(getString(url));
         return new ChannelAccessToken(jObj.getString("sig"), jObj.getString("token"));
     }
 
-    public static final String getStreams(ChannelAccessToken token, String channel) throws IOException
+    public static final String getPlaylist(String channel) throws IOException, JSONException
     {
+        ChannelAccessToken token = getChannelAccessToken(channel);
         String url = String.format(
                 "http://usher.twitch.tv/select/%s.json?nauthsig=%s&nauth=%s&allow_source=true&allow_audio_only=true",
                 channel, Uri.encode(token.sig), Uri.encode(token.token));
 
-        return getPlaylist(url);
+        return getString(url);
     }
 
-    public static final String getStreams2(ChannelAccessToken token, String channel) throws IOException
+    public static final String getPlaylist2(String channel) throws IOException, JSONException
     {
+        ChannelAccessToken token = getChannelAccessToken(channel);
         String url = String.format(
                 "http://usher.twitch.tv/api/channel/hls/%s.m3u8?sig=%s&token=%s&allow_source=true&allow_audio_only=true",
                 channel, Uri.encode(token.sig), Uri.encode(token.token));
 
-        return getPlaylist(url);
+        return getString(url);
     }
 
-    public static final String getPlaylist(String url) throws IOException
+    private static final String getString(String url) throws IOException
     {
         HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
         try {

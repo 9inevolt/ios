@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <color name="offline_gradient_start">#101010</color>
+    <color name="offline_gradient_center">#282828</color>
+    <color name="offline_gradient_end">#101010</color>
+</resources>

@@ -161,6 +161,13 @@ public class FullMediaController extends FrameLayout implements View.OnClickList
         if (mPlayer == null || mPauseButton == null)
             return;
 
+        if (!mPlayer.isInPlaybackState()) {
+            mPauseButton.setVisibility(View.GONE);
+            return;
+        }
+
+        mPauseButton.setVisibility(View.VISIBLE);
+
         if (mPlayer.isPlaying()) {
             mPauseButton.setImageResource(R.drawable.player_pause);
         } else {
@@ -171,6 +178,13 @@ public class FullMediaController extends FrameLayout implements View.OnClickList
     private void updateFullScreen() {
         if (mPlayer == null || mFullScreenButton == null)
             return;
+
+        if (!mPlayer.isInPlaybackState()) {
+            mFullScreenButton.setVisibility(View.GONE);
+            return;
+        }
+
+        mFullScreenButton.setVisibility(View.VISIBLE);
 
         if (mPlayer.isFullScreen()) {
             mFullScreenButton.setImageResource(R.drawable.player_full_off);

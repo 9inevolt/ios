@@ -7,7 +7,9 @@ import java.io.IOException;
 
 import android.content.Context;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.media.*;
+import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.*;
 import android.net.Uri;
 import android.util.*;
@@ -29,6 +31,7 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
     private SurfaceHolder holder = null;
     private Uri playUri = null;
     private boolean fullScreen, userFullScreen;
+    private OnCompletionListener onCompletionListener;
     private OnFullScreenListener onFullScreenListener;
     private OnSettingsListener onSettingsListener;
 
@@ -52,24 +55,21 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
-        if (isInPlaybackState() && controls != null) {
+        if (controls != null) {
             toggleControlsVisibility();
         }
         return false;
-    }
-
-    public boolean isInPlaybackState()
-    {
-        return player != null &&
-            state != State.ERROR &&
-            state != State.IDLE &&
-            state != State.PREPARING;
     }
 
     public void setVideoURI(String uri) throws IOException {
         play(uri);
         requestLayout();
         invalidate();
+    }
+
+    public void setOnCompletionListener(OnCompletionListener l)
+    {
+        onCompletionListener = l;
     }
 
     public void setOnFullScreenListener(OnFullScreenListener l)
@@ -82,14 +82,29 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
         onSettingsListener = l;
     }
 
+    public void resume() throws IOException {
+        play();
+    }
+
+    public void suspend() {
+        releasePlayer(false);
+    }
+
     public void stop() {
         if (player != null) {
             player.stop();
-            player.release();
-            player = null;
-            state = State.IDLE;
-            targetState  = State.IDLE;
         }
+
+        releasePlayer(true);
+    }
+
+    @Override
+    public boolean isInPlaybackState()
+    {
+        return player != null &&
+            state != State.ERROR &&
+            state != State.IDLE &&
+            state != State.PREPARING;
     }
 
     @Override
@@ -210,6 +225,13 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
         }
     }
 
+    @Override
+    protected void onAttachedToWindow()
+    {
+        super.onAttachedToWindow();
+        initControls();
+    }
+
     protected void doFullScreen(boolean full, boolean userInitiated)
     {
         if (!userInitiated && userFullScreen) {
@@ -243,62 +265,64 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
         //Log.i("@@@@", "onMeasure(" + MeasureSpec.toString(widthMeasureSpec) + ", "
         //        + MeasureSpec.toString(heightMeasureSpec) + ")");
 
+        if (mVideoWidth <= 0 || mVideoHeight <= 0) {
+            mVideoWidth = 16;
+            mVideoHeight = 9;
+        }
+
         int width = getDefaultSize(mVideoWidth, widthMeasureSpec);
         int height = getDefaultSize(mVideoHeight, heightMeasureSpec);
-        if (mVideoWidth > 0 && mVideoHeight > 0) {
 
-            int widthSpecMode = MeasureSpec.getMode(widthMeasureSpec);
-            int widthSpecSize = MeasureSpec.getSize(widthMeasureSpec);
-            int heightSpecMode = MeasureSpec.getMode(heightMeasureSpec);
-            int heightSpecSize = MeasureSpec.getSize(heightMeasureSpec);
+        int widthSpecMode = MeasureSpec.getMode(widthMeasureSpec);
+        int widthSpecSize = MeasureSpec.getSize(widthMeasureSpec);
+        int heightSpecMode = MeasureSpec.getMode(heightMeasureSpec);
+        int heightSpecSize = MeasureSpec.getSize(heightMeasureSpec);
 
-            if (widthSpecMode == MeasureSpec.EXACTLY && heightSpecMode == MeasureSpec.EXACTLY) {
-                // the size is fixed
-                width = widthSpecSize;
-                height = heightSpecSize;
+        if (widthSpecMode == MeasureSpec.EXACTLY && heightSpecMode == MeasureSpec.EXACTLY) {
+            // the size is fixed
+            width = widthSpecSize;
+            height = heightSpecSize;
 
-                // for compatibility, we adjust size based on aspect ratio
-                if ( mVideoWidth * height  < width * mVideoHeight ) {
-                    //Log.i("@@@", "image too wide, correcting");
-                    width = height * mVideoWidth / mVideoHeight;
-                } else if ( mVideoWidth * height  > width * mVideoHeight ) {
-                    //Log.i("@@@", "image too tall, correcting");
-                    height = width * mVideoHeight / mVideoWidth;
-                }
-            } else if (widthSpecMode == MeasureSpec.EXACTLY) {
-                // only the width is fixed, adjust the height to match aspect ratio if possible
-                width = widthSpecSize;
-                height = width * mVideoHeight / mVideoWidth;
-                if (heightSpecMode == MeasureSpec.AT_MOST && height > heightSpecSize) {
-                    // couldn't match aspect ratio within the constraints
-                    height = heightSpecSize;
-                }
-            } else if (heightSpecMode == MeasureSpec.EXACTLY) {
-                // only the height is fixed, adjust the width to match aspect ratio if possible
-                height = heightSpecSize;
+            // for compatibility, we adjust size based on aspect ratio
+            if ( mVideoWidth * height  < width * mVideoHeight ) {
+                //Log.i("@@@", "image too wide, correcting");
                 width = height * mVideoWidth / mVideoHeight;
-                if (widthSpecMode == MeasureSpec.AT_MOST && width > widthSpecSize) {
-                    // couldn't match aspect ratio within the constraints
-                    width = widthSpecSize;
-                }
-            } else {
-                // neither the width nor the height are fixed, try to use actual video size
-                width = mVideoWidth;
-                height = mVideoHeight;
-                if (heightSpecMode == MeasureSpec.AT_MOST && height > heightSpecSize) {
-                    // too tall, decrease both width and height
-                    height = heightSpecSize;
-                    width = height * mVideoWidth / mVideoHeight;
-                }
-                if (widthSpecMode == MeasureSpec.AT_MOST && width > widthSpecSize) {
-                    // too wide, decrease both width and height
-                    width = widthSpecSize;
-                    height = width * mVideoHeight / mVideoWidth;
-                }
+            } else if ( mVideoWidth * height  > width * mVideoHeight ) {
+                //Log.i("@@@", "image too tall, correcting");
+                height = width * mVideoHeight / mVideoWidth;
+            }
+        } else if (widthSpecMode == MeasureSpec.EXACTLY) {
+            // only the width is fixed, adjust the height to match aspect ratio if possible
+            width = widthSpecSize;
+            height = width * mVideoHeight / mVideoWidth;
+            if (heightSpecMode == MeasureSpec.AT_MOST && height > heightSpecSize) {
+                // couldn't match aspect ratio within the constraints
+                height = heightSpecSize;
+            }
+        } else if (heightSpecMode == MeasureSpec.EXACTLY) {
+            // only the height is fixed, adjust the width to match aspect ratio if possible
+            height = heightSpecSize;
+            width = height * mVideoWidth / mVideoHeight;
+            if (widthSpecMode == MeasureSpec.AT_MOST && width > widthSpecSize) {
+                // couldn't match aspect ratio within the constraints
+                width = widthSpecSize;
             }
         } else {
-            // no size yet, just adopt the given spec sizes
+            // neither the width nor the height are fixed, try to use actual video size
+            width = mVideoWidth;
+            height = mVideoHeight;
+            if (heightSpecMode == MeasureSpec.AT_MOST && height > heightSpecSize) {
+                // too tall, decrease both width and height
+                height = heightSpecSize;
+                width = height * mVideoWidth / mVideoHeight;
+            }
+            if (widthSpecMode == MeasureSpec.AT_MOST && width > widthSpecSize) {
+                // too wide, decrease both width and height
+                width = widthSpecSize;
+                height = width * mVideoHeight / mVideoWidth;
+            }
         }
+
         setMeasuredDimension(width, height);
     }
 
@@ -313,6 +337,19 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
         targetState = State.IDLE;
     }
 
+    private void initControls()
+    {
+        if (controls == null) {
+            controls = new FullMediaController(getContext());
+            controls.setMediaPlayer(this);
+            if (getParent() instanceof ViewGroup) {
+                controls.setAnchorView((ViewGroup) getParent());
+            } else {
+                Log.w(TAG, "Can't anchor controls without a parent ViewGroup.");
+            }
+        }
+    }
+
     private void initPlayer()
     {
         if (player == null) {
@@ -324,19 +361,19 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
             player.setAudioStreamType(AudioManager.STREAM_MUSIC);
         }
 
-        if (controls == null) {
-            controls = new FullMediaController(getContext());
-            controls.setMediaPlayer(this);
-        }
+        initControls();
     }
 
-    private void releasePlayer()
+    private void releasePlayer(boolean clearTarget)
     {
         if (player != null) {
             player.reset();
             player.release();
             player = null;
             state = State.IDLE;
+            if (clearTarget) {
+                targetState = State.IDLE;
+            }
         }
     }
 
@@ -348,22 +385,17 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
 
     private void play() throws IOException
     {
-        if (playUri == null || holder == null)
+        if (holder == null || playUri == null)
             return;
 
         Log.d(TAG, "play: " + playUri);
-        releasePlayer();
+        releasePlayer(false);
         initPlayer();
-        player.setDataSource(getContext(), playUri);
         player.setDisplay(holder);
+        player.setDataSource(getContext(), playUri);
         player.setScreenOnWhilePlaying(true);
         player.prepareAsync();
         state = State.PREPARING;
-        if (getParent() instanceof ViewGroup) {
-            controls.setAnchorView((ViewGroup) getParent());
-        } else {
-            Log.w(TAG, "Can't anchor controls without a parent ViewGroup.");
-        }
     }
 
     private void toggleControlsVisibility() {
@@ -379,7 +411,7 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
         public void surfaceDestroyed(SurfaceHolder sHolder)
         {
             holder = null;
-            releasePlayer();
+            releasePlayer(false);
         }
 
         @Override
@@ -396,7 +428,9 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
         @Override
         public void surfaceChanged(SurfaceHolder sHolder, int format, int width, int height)
         {
-
+            if (targetState == State.PLAYING && width > 0 && height > 0) {
+                start();
+            }
         }
     };
 
@@ -431,12 +465,16 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
         @Override
         public void onVideoSizeChanged(MediaPlayer mp, int mWidth, int mHeight)
         {
-            mVideoHeight = mp.getVideoHeight();
-            mVideoWidth = mp.getVideoWidth();
-            if (mVideoHeight > 0 && mVideoWidth > 0) {
-                getHolder().setFixedSize(mVideoWidth, mVideoHeight);
-                requestLayout();
-            }
+            Log.d(TAG, "onVideoSizeChanged: " + mWidth + "x" + mHeight);
+
+            if (mWidth <= 0 || mHeight <= 0)
+                return;
+
+            mVideoWidth = mWidth;
+            mVideoHeight = mHeight;
+
+            //getHolder().setFixedSize(mVideoWidth, mVideoHeight);
+            requestLayout();
         }
     };
 
@@ -447,6 +485,12 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
             targetState = State.COMPLETE;
             if (controls != null) {
                 controls.hide();
+            }
+
+            stop();
+
+            if (onCompletionListener != null) {
+                onCompletionListener.onCompletion(player);
             }
         }
     };
