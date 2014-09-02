@@ -2,6 +2,7 @@ package gg.destiny.app.preference;
 
 import java.lang.ref.WeakReference;
 
+import android.app.Activity;
 import android.content.*;
 
 
@@ -30,7 +31,17 @@ public final class ChannelPreferenceHelper extends StringPreferenceHelper
         @Override
         boolean isValid()
         {
-            return listener.get() != null;
+            ChannelPreferenceChangeListener l = listener.get();
+
+            if (l == null)
+                return false;
+
+            if (l instanceof Activity) {
+                Activity a = (Activity) l;
+                return !a.isFinishing() && !a.isDestroyed();
+            }
+
+            return true;
         }
 
         @Override

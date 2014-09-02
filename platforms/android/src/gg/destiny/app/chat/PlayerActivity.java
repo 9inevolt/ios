@@ -35,11 +35,15 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
 
         setContentView(R.layout.player);
 
-        player = new PlayerFragment();
+        player = (PlayerFragment) getFragmentManager().findFragmentByTag(getString(R.string.player_fragment));
+        if (player == null)
+        {
+            player = new PlayerFragment();
+            getFragmentManager().beginTransaction()
+                .add(R.id.player_container, player, getString(R.string.player_fragment))
+                .commit();
+        }
         player.setOnFullScreenListener(this);
-        getFragmentManager().beginTransaction()
-            .add(R.id.player_container, player, getString(R.string.player_fragment))
-            .commit();
 
         Config.init(this);
         webView = (CordovaWebView) findViewById(R.id.web_view);
