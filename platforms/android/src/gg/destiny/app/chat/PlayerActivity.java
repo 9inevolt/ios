@@ -9,6 +9,7 @@ import java.util.concurrent.Executors;
 
 import org.apache.cordova.*;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Context;
@@ -20,6 +21,7 @@ import android.util.Log;
 import android.view.*;
 import android.widget.SearchView;
 
+@TargetApi(14)
 public class PlayerActivity extends Activity implements CordovaInterface, OnFullScreenListener,
         ChannelPreferenceChangeListener
 {
@@ -95,6 +97,9 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
             webView.removeAllViews();
             webView.handleDestroy();
         }
+
+        App.getChannelPreferenceHelper().removeListener(this);
+
         super.onDestroy();
     }
 

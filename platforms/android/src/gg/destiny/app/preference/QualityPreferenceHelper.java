@@ -1,7 +1,7 @@
 package gg.destiny.app.preference;
 
 import java.lang.ref.WeakReference;
-import java.util.List;
+import java.util.*;
 
 import android.app.AlertDialog;
 import android.content.*;
@@ -20,7 +20,12 @@ public final class QualityPreferenceHelper extends StringPreferenceHelper
 
     public void addListener(QualityPreferenceChangeListener l)
     {
-        super.addListener(new ListenerWrapper(l));
+        super.addListener(l, new ListenerWrapper(l));
+    }
+
+    public void removeListener(QualityPreferenceChangeListener l)
+    {
+        super.removeListener(l);
     }
 
     public void showDialog(Context context, List<String> qualities)

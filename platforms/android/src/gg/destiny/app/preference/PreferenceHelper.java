@@ -12,13 +12,13 @@ public abstract class PreferenceHelper<T> implements OnSharedPreferenceChangeLis
 {
     private Context sharedContext;
     private final String preferenceName;
-    private List<PreferenceChangeListener<T>> listeners;
+    private Map<Object, PreferenceChangeListener<T>> listeners;
 
     public PreferenceHelper(Context context, String preferenceKey)
     {
         sharedContext = context;
         preferenceName = preferenceKey;
-        listeners = new ArrayList<PreferenceChangeListener<T>>();
+        listeners = new HashMap<Object, PreferenceChangeListener<T>>();
 
         PreferenceManager.getDefaultSharedPreferences(context)
             .registerOnSharedPreferenceChangeListener(this);
@@ -30,7 +30,7 @@ public abstract class PreferenceHelper<T> implements OnSharedPreferenceChangeLis
         if (preferenceName.equals(key)) {
             PreferenceChangeListener<T> listener;
             Iterator<PreferenceChangeListener<T>> i;
-            for (i = listeners.iterator(); i.hasNext(); ) {
+            for (i = listeners.values().iterator(); i.hasNext(); ) {
                 listener = i.next();
                 if (!listener.isValid()) {
                     i.remove();
@@ -41,14 +41,14 @@ public abstract class PreferenceHelper<T> implements OnSharedPreferenceChangeLis
         }
     }
 
-    protected void addListener(PreferenceChangeListener<T> listener)
+    protected void addListener(Object key, PreferenceChangeListener<T> listener)
     {
-        listeners.add(listener);
+        listeners.put(key, listener);
     }
 
-    protected boolean removeListener(PreferenceChangeListener<T> listener)
+    protected void removeListener(Object key)
     {
-        return listeners.remove(listener);
+        listeners.remove(key);
     }
 
     public abstract T getPreferenceValue();

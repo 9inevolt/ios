@@ -4,10 +4,9 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
     
-    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    <FrameLayout android:id="@+id/player_container"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/player_container" />
+        android:layout_height="wrap_content" />
 
     <org.apache.cordova.CordovaWebView android:id="@+id/web_view"
         android:layout_width="match_parent"

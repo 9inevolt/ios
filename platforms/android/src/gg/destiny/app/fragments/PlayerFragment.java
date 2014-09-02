@@ -17,6 +17,7 @@ import java.util.*;
 
 import org.json.JSONObject;
 
+import android.annotation.TargetApi;
 import android.app.Fragment;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
@@ -31,6 +32,7 @@ import android.view.View.OnTouchListener;
 import android.widget.*;
 import android.widget.ImageView.ScaleType;
 
+@TargetApi(14)
 public class PlayerFragment extends Fragment implements OnTouchListener,
         QualityPreferenceChangeListener, OnSettingsListener, Callback, OnCompletionListener
 {
@@ -110,6 +112,13 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
         playerView.suspend();
         statusHandler.removeCallbacks(getStreamRunnable);
         super.onStop();
+    }
+
+    @Override
+    public void onDestroy()
+    {
+        App.getQualityPreferenceHelper().removeListener(this);
+        super.onDestroy();
     }
 
     @Override
