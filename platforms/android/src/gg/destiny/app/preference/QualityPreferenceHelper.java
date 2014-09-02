@@ -1,48 +1,26 @@
 package gg.destiny.app.preference;
 
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.List;
 
-import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.content.*;
 import android.content.DialogInterface.OnClickListener;
-import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
-import android.os.Build;
-import android.preference.PreferenceManager;
 
 
-public final class QualityPreferenceHelper implements OnSharedPreferenceChangeListener
+public final class QualityPreferenceHelper extends StringPreferenceHelper
 {
     private static final String QUALITY_PREFERENCE = "preferred_quality";
-
-    private Context sharedContext;
-    private List<WeakReference<QualityPreferenceChangeListener>> listeners;
+    private static final String QUALITY_DEFAULT = "mobile";
 
     public QualityPreferenceHelper(Context context)
     {
-        sharedContext = context;
-        listeners = new ArrayList<WeakReference<QualityPreferenceChangeListener>>();
-
-        PreferenceManager.getDefaultSharedPreferences(context)
-            .registerOnSharedPreferenceChangeListener(this);
+        super(context, QUALITY_PREFERENCE, QUALITY_DEFAULT);
     }
 
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key)
+    public void addListener(QualityPreferenceChangeListener l)
     {
-        if (QUALITY_PREFERENCE.equals(key)) {
-            QualityPreferenceChangeListener listener;
-            Iterator<WeakReference<QualityPreferenceChangeListener>> i;
-            for (i = listeners.iterator(); i.hasNext(); ) {
-                listener = i.next().get();
-                if (listener == null) {
-                    i.remove();
-                } else {
-                    listener.onQualityPreferenceChanged(getPreferenceValue());
-                }
-            }
-        }
+        super.addListener(new ListenerWrapper(l));
     }
 
     public void showDialog(Context context, List<String> qualities)
@@ -61,31 +39,28 @@ public final class QualityPreferenceHelper implements OnSharedPreferenceChangeLi
             .show();
     }
 
-    public void addListener(QualityPreferenceChangeListener listener)
+    private static final class ListenerWrapper extends PreferenceChangeListener<String>
     {
-        listeners.add(new WeakReference<QualityPreferenceChangeListener>(listener));
-    }
+        WeakReference<QualityPreferenceChangeListener> listener;
 
-    public String getPreferenceValue()
-    {
-        return PreferenceManager.getDefaultSharedPreferences(sharedContext)
-            .getString(QUALITY_PREFERENCE, "mobile");
-    }
-
-    @TargetApi(9)
-    public void setPreferenceValue(String value)
-    {
-        SharedPreferences.Editor editor = getSharedPreferences().edit()
-                .putString(QUALITY_PREFERENCE, value);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-            editor.apply();
-        } else {
-            editor.commit();
+        ListenerWrapper(QualityPreferenceChangeListener l)
+        {
+            listener = new WeakReference<QualityPreferenceChangeListener>(l);
         }
-    }
 
-    private SharedPreferences getSharedPreferences()
-    {
-        return PreferenceManager.getDefaultSharedPreferences(sharedContext);
+        @Override
+        boolean isValid()
+        {
+            return listener.get() != null;
+        }
+
+        @Override
+        public void onPreferenceChanged(String value)
+        {
+            QualityPreferenceChangeListener l = listener.get();
+            if (l != null) {
+                l.onQualityPreferenceChanged(value);
+            }
+        }
     }
 }

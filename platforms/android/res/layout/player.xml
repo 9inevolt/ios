@@ -3,12 +3,12 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
-        
-    <fragment class="gg.destiny.app.fragments.PlayerFragment" 
+    
+    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:tag="@string/player_fragment" />
-    
+        android:id="@+id/player_container" />
+
     <org.apache.cordova.CordovaWebView android:id="@+id/web_view"
         android:layout_width="match_parent"
         android:layout_height="0dp"

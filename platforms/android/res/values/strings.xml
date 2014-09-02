@@ -2,4 +2,5 @@
 <resources>
     <string name="app_name">Destiny</string>
     <string name="player_fragment">player_fragment</string>
+    <string name="search_hint">Channel name</string>
 </resources>

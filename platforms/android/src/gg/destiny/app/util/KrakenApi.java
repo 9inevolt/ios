@@ -15,27 +15,46 @@ public final class KrakenApi
     {
         String url = String.format("https://api.twitch.tv/kraken/channels/%s", channel);
 
-        return new JSONObject(getString(url));
+        String obj = getString(url);
+
+        if (obj == null)
+            return null;
+
+        return new JSONObject(obj);
     }
 
     public static final JSONObject getStream(String channel) throws IOException, JSONException
     {
         String url = String.format("https://api.twitch.tv/kraken/streams/%s", channel);
 
-        return new JSONObject(getString(url));
+        String obj = getString(url);
+
+        if (obj == null)
+            return null;
+
+        return new JSONObject(obj);
     }
 
     public static final ChannelAccessToken getChannelAccessToken(String channel) throws IOException, JSONException
     {
         String url = String.format("http://api.twitch.tv/api/channels/%s/access_token", channel);
 
-        JSONObject jObj = new JSONObject(getString(url));
+        String token = getString(url);
+
+        if (token == null)
+            return null;
+
+        JSONObject jObj = new JSONObject(token);
         return new ChannelAccessToken(jObj.getString("sig"), jObj.getString("token"));
     }
 
     public static final String getPlaylist(String channel) throws IOException, JSONException
     {
         ChannelAccessToken token = getChannelAccessToken(channel);
+
+        if (token ==  null)
+            return null;
+
         String url = String.format(
                 "http://usher.twitch.tv/select/%s.json?nauthsig=%s&nauth=%s&allow_source=true&allow_audio_only=true",
                 channel, Uri.encode(token.sig), Uri.encode(token.token));
@@ -46,6 +65,10 @@ public final class KrakenApi
     public static final String getPlaylist2(String channel) throws IOException, JSONException
     {
         ChannelAccessToken token = getChannelAccessToken(channel);
+
+        if (token ==  null)
+            return null;
+
         String url = String.format(
                 "http://usher.twitch.tv/api/channel/hls/%s.m3u8?sig=%s&token=%s&allow_source=true&allow_audio_only=true",
                 channel, Uri.encode(token.sig), Uri.encode(token.token));
@@ -57,11 +80,15 @@ public final class KrakenApi
     {
         HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
         try {
-            if (conn.getResponseCode() != 200) {
-                throw new IOException(conn.getResponseMessage());
+            if (conn.getResponseCode() == 200) {
+                return readFullyString(conn.getInputStream());
             }
 
-            return readFullyString(conn.getInputStream());
+            if (conn.getResponseCode() < 500) {
+                return null;
+            }
+
+            throw new IOException(conn.getResponseMessage());
         } finally {
             conn.disconnect();
         }

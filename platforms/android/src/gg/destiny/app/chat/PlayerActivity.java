@@ -1,6 +1,7 @@
 package gg.destiny.app.chat;
 
 import gg.destiny.app.fragments.PlayerFragment;
+import gg.destiny.app.preference.ChannelPreferenceChangeListener;
 import gg.destiny.app.widget.FullMediaController.OnFullScreenListener;
 
 import java.util.concurrent.ExecutorService;
@@ -9,16 +10,18 @@ import java.util.concurrent.Executors;
 import org.apache.cordova.*;
 
 import android.app.Activity;
+import android.app.SearchManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.content.res.Configuration;
 import android.media.MediaPlayer;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
 import android.util.Log;
-import android.view.View;
+import android.view.*;
+import android.widget.SearchView;
 
-public class PlayerActivity extends FragmentActivity implements CordovaInterface, OnFullScreenListener
+public class PlayerActivity extends Activity implements CordovaInterface, OnFullScreenListener,
+        ChannelPreferenceChangeListener
 {
     public static final String TAG = "PlayerActivity";
     private final ExecutorService threadPool = Executors.newCachedThreadPool();
@@ -32,13 +35,31 @@ public class PlayerActivity extends FragmentActivity implements CordovaInterface
 
         setContentView(R.layout.player);
 
-        player = (PlayerFragment) getSupportFragmentManager().findFragmentByTag(getString(R.string.player_fragment));
+        player = new PlayerFragment();
         player.setOnFullScreenListener(this);
+        getFragmentManager().beginTransaction()
+            .add(R.id.player_container, player, getString(R.string.player_fragment))
+            .commit();
 
         Config.init(this);
         webView = (CordovaWebView) findViewById(R.id.web_view);
         //webView.loadUrl(Config.getStartUrl());
         webView.loadUrl("file:///android_asset/www/chat-lite.html");
+
+        App.getChannelPreferenceHelper().addListener(this);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.player_menu, menu);
+
+        SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+        SearchView searchView = (SearchView) menu.findItem(R.id.menu_search).getActionView();
+
+        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+        searchView.setIconifiedByDefault(true);
+
+        return true;
     }
 
     @Override
@@ -54,6 +75,16 @@ public class PlayerActivity extends FragmentActivity implements CordovaInterface
     }
 
     @Override
+    public void onChannelPreferenceChanged(String channel)
+    {
+        player = new PlayerFragment();
+        player.setOnFullScreenListener(this);
+        getFragmentManager().beginTransaction()
+            .replace(R.id.player_container, player, getString(R.string.player_fragment))
+            .commit();
+    }
+
+    @Override
     protected void onDestroy()
     {
         if (webView != null) {
@@ -61,6 +92,17 @@ public class PlayerActivity extends FragmentActivity implements CordovaInterface
             webView.handleDestroy();
         }
         super.onDestroy();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        setIntent(intent);
+        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+            String query = intent.getStringExtra(SearchManager.QUERY);
+            if (query != null && !"".equals(query.trim())) {
+                App.getChannelPreferenceHelper().setPreferenceValue(query);
+            }
+        }
     }
 
     @Override

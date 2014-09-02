@@ -6,8 +6,7 @@ import gg.destiny.app.model.Channel;
 import gg.destiny.app.model.Stream;
 import gg.destiny.app.parsers.extm3uParser;
 import gg.destiny.app.parsers.extm3u.*;
-import gg.destiny.app.preference.QualityPreferenceChangeListener;
-import gg.destiny.app.preference.QualityPreferenceHelper;
+import gg.destiny.app.preference.*;
 import gg.destiny.app.util.*;
 import gg.destiny.app.widget.*;
 import gg.destiny.app.widget.FullMediaController.OnFullScreenListener;
@@ -18,6 +17,7 @@ import java.util.*;
 
 import org.json.JSONObject;
 
+import android.app.Fragment;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -25,7 +25,6 @@ import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.os.*;
 import android.os.Handler.Callback;
-import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.*;
 import android.view.View.OnTouchListener;
@@ -39,10 +38,9 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
         UNKNOWN, OFFLINE, ONLINE
     }
     public static final String TAG = "PlayerFragment";
-    public static final String DEFAULT_CHANNEL = "virlomi";
     private static long STATUS_DELAY = 15000;
 
-    private String channel = DEFAULT_CHANNEL;
+    private String preferredChannel;
     private String preferredQuality;
 //    private Uri playUri = null;
     private extm3u masterPlaylist;
@@ -53,6 +51,7 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
     private Handler statusHandler;
     private boolean offlineImageLoaded;
     private Status status = Status.UNKNOWN;
+    private Runnable getStreamRunnable;
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -60,10 +59,15 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
 
-        QualityPreferenceHelper helper = App.getQualityPreferenceHelper();
-        preferredQuality = helper.getPreferenceValue();
-        helper.addListener(this);
+        QualityPreferenceHelper qualityHelper = App.getQualityPreferenceHelper();
+        preferredQuality = qualityHelper.getPreferenceValue();
+        qualityHelper.addListener(this);
+
+        ChannelPreferenceHelper channelHelper = App.getChannelPreferenceHelper();
+        preferredChannel = channelHelper.getPreferenceValue();
+
         statusHandler = new Handler(this);
+        initStreamRunnable();
     }
 
     @Override
@@ -192,13 +196,13 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
         if (status == Status.ONLINE)
             return;
 
-        new GetMasterPlaylistTask().execute(channel);
+        new GetMasterPlaylistTask().execute(preferredChannel);
     }
 
     private void online()
     {
         if (status == Status.ONLINE && masterPlaylist != null) {
-            Log.d(TAG, channel + " still online");
+            Log.d(TAG, preferredChannel + " still online");
             return;
         }
 
@@ -211,7 +215,7 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
         status = Status.ONLINE;
         playerView.setVisibility(View.VISIBLE);
         offlineImageView.setVisibility(View.GONE);
-        Log.d(TAG, channel + " went online");
+        Log.d(TAG, preferredChannel + " went online");
     }
 
     private void offline()
@@ -219,7 +223,7 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
         statusHandler.postDelayed(getStreamRunnable, STATUS_DELAY);
 
         if (status == Status.OFFLINE) {
-            Log.d(TAG, channel + " still offline");
+            Log.d(TAG, preferredChannel + " still offline");
             return;
         }
 
@@ -228,11 +232,11 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
         if (!offlineImageLoaded) {
             offlineImageView.setImageResource(R.drawable.offline_default);
             offlineImageView.setScaleType(ScaleType.CENTER_CROP);
-            new GetChannelTask().execute(channel);
+            new GetChannelTask().execute(preferredChannel);
         }
         playerView.setVisibility(View.GONE);
         offlineImageView.setVisibility(View.VISIBLE);
-        Log.d(TAG, channel + " went offline");
+        Log.d(TAG, preferredChannel + " went offline");
     }
 
     private void setOfflineImage(Drawable d)
@@ -278,23 +282,36 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
         }
     }
 
-    private Runnable getStreamRunnable = new Runnable() {
-        @Override
-        public void run()
-        {
-            new GetStreamTask() {
-                @Override
-                protected void onPostExecute(Stream stream)
-                {
-                    if (stream != null) {
-                        tryOnline();
-                    } else {
-                        offline();
-                    }
-                }
-            }.execute(channel);
+    private void initStreamRunnable() {
+        if (getStreamRunnable != null) {
+            return;
         }
-    };
+
+        getStreamRunnable = new Runnable() {
+            @Override
+            public void run()
+            {
+                new GetStreamTask() {
+                    @Override
+                    protected void onPostExecute(Stream stream)
+                    {
+                        if (stream != null) {
+                            tryOnline();
+                        } else {
+                            offline();
+                        }
+                    }
+                }.execute(preferredChannel);
+            }
+        };
+    }
+
+    private void releaseStreamRunnable() {
+        if (statusHandler != null && getStreamRunnable != null) {
+            statusHandler.removeCallbacks(getStreamRunnable);
+            getStreamRunnable = null;
+        }
+    }
 
     private class GetMasterPlaylistTask extends AsyncTask<String, Void, extm3u>
     {
