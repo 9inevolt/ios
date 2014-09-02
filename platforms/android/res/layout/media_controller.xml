@@ -15,7 +15,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|left"
         android:background="@android:color/transparent"
-        android:src="@drawable/player_gear" />
+        android:src="@drawable/player_settings" />
     
     <ImageButton android:id="@+id/full_screen_button"
         android:layout_width="wrap_content"
