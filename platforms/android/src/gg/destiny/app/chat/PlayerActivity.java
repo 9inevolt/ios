@@ -29,6 +29,7 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
     private final ExecutorService threadPool = Executors.newCachedThreadPool();
     CordovaWebView webView;
     private PlayerFragment player;
+    private MenuItem searchMenuItem;
 
     @Override
     protected void onCreate(Bundle bundle)
@@ -60,7 +61,8 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
         getMenuInflater().inflate(R.menu.player_menu, menu);
 
         SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-        SearchView searchView = (SearchView) menu.findItem(R.id.menu_search).getActionView();
+        searchMenuItem = menu.findItem(R.id.menu_search);
+        SearchView searchView = (SearchView) searchMenuItem.getActionView();
 
         searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
         searchView.setIconifiedByDefault(true);
@@ -110,6 +112,7 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
             String query = intent.getStringExtra(SearchManager.QUERY);
             if (query != null && !"".equals(query.trim())) {
                 App.getChannelPreferenceHelper().setPreferenceValue(query);
+                searchMenuItem.collapseActionView();
             }
         }
     }

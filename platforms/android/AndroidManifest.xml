@@ -14,7 +14,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".PlayerActivity"
-                android:theme="@android:style/Theme.Holo"
+                android:theme="@style/AppTheme"
                 android:configChanges="orientation|screenSize|keyboardHidden"
                 android:launchMode="singleTop">
             <intent-filter>
