@@ -11,6 +11,9 @@ import android.net.Uri;
 
 public final class KrakenApi
 {
+    public static final int CONNECT_TIMEOUT = 10000;
+    public static final int READ_TIMEOUT = 10000;
+
     public static final JSONObject getChannel(String channel) throws IOException, JSONException
     {
         String url = String.format("https://api.twitch.tv/kraken/channels/%s", channel);
@@ -27,7 +30,7 @@ public final class KrakenApi
     {
         String url = String.format("https://api.twitch.tv/kraken/streams/%s", channel);
 
-        String obj = getString(url);
+        String obj = getString(url, false);
 
         if (obj == null)
             return null;
@@ -78,7 +81,16 @@ public final class KrakenApi
 
     private static final String getString(String url) throws IOException
     {
+        return getString(url, true);
+    }
+
+    private static final String getString(String url, boolean useCaches) throws IOException
+    {
         HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+        conn.setConnectTimeout(CONNECT_TIMEOUT);
+        conn.setReadTimeout(READ_TIMEOUT);
+        conn.setUseCaches(useCaches);
+
         try {
             if (conn.getResponseCode() == 200) {
                 return readFullyString(conn.getInputStream());
@@ -94,7 +106,7 @@ public final class KrakenApi
         }
     }
 
-    public static final class ChannelAccessToken {
+    static final class ChannelAccessToken {
         public String sig;
         public String token;
 

@@ -7,9 +7,7 @@ import java.io.IOException;
 
 import android.content.Context;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
 import android.media.*;
-import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.*;
 import android.net.Uri;
 import android.util.*;
@@ -358,6 +356,7 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
             player.setOnErrorListener(errorListener);
             player.setOnVideoSizeChangedListener(videoSizeChangedListener);
             player.setOnCompletionListener(completionListener);
+            player.setOnBufferingUpdateListener(bufferingUpdateListener);
             player.setAudioStreamType(AudioManager.STREAM_MUSIC);
         }
 
@@ -480,6 +479,7 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
 
     private MediaPlayer.OnCompletionListener completionListener =
         new MediaPlayer.OnCompletionListener() {
+        @Override
         public void onCompletion(MediaPlayer mp) {
             state = State.COMPLETE;
             targetState = State.COMPLETE;
@@ -494,4 +494,24 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
             }
         }
     };
+
+    private MediaPlayer.OnBufferingUpdateListener bufferingUpdateListener =
+        new MediaPlayer.OnBufferingUpdateListener() {
+        @Override
+        public void onBufferingUpdate(MediaPlayer mp, int percent)
+        {
+            Log.d(TAG, "Buffering: " + percent + "%");
+        }
+    };
+
+    private MediaPlayer.OnInfoListener infoListener =
+        new MediaPlayer.OnInfoListener() {
+
+            @Override
+            public boolean onInfo(MediaPlayer mp, int what, int extra)
+            {
+                // TODO Auto-generated method stub
+                return false;
+            }
+        };
 }
