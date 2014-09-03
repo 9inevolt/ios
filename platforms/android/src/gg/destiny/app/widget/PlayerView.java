@@ -5,6 +5,7 @@ import gg.destiny.app.widget.FullMediaController.OnSettingsListener;
 
 import java.io.IOException;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.media.*;
@@ -13,6 +14,7 @@ import android.net.Uri;
 import android.util.*;
 import android.view.*;
 
+@TargetApi(14)
 public class PlayerView extends SurfaceView implements FullMediaPlayerControl
 {
     enum State {
@@ -54,7 +56,7 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
         if (controls != null) {
-            toggleControlsVisibility();
+            controls.toggleVisibility();
         }
         return false;
     }
@@ -216,10 +218,17 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
     {
         super.onConfigurationChanged(config);
 
+        int visibility = getSystemUiVisibility();
         if (config.orientation == Configuration.ORIENTATION_LANDSCAPE && isInPlaybackState()) {
             doFullScreen(true, false);
+            visibility |= View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
         } else {
             doFullScreen(false, false);
+            visibility &= ~View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+        }
+
+        if (!ViewConfiguration.get(getContext()).hasPermanentMenuKey()) {
+            setSystemUiVisibility(visibility);
         }
     }
 
@@ -253,8 +262,8 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
             }
         }
 
-        if (userInitiated && onFullScreenListener != null) {
-            onFullScreenListener.onFullScreen(player, full);
+        if (onFullScreenListener != null) {
+            onFullScreenListener.onFullScreen(player, full, userInitiated);
         }
     }
 
@@ -276,7 +285,11 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
         int heightSpecMode = MeasureSpec.getMode(heightMeasureSpec);
         int heightSpecSize = MeasureSpec.getSize(heightMeasureSpec);
 
-        if (widthSpecMode == MeasureSpec.EXACTLY && heightSpecMode == MeasureSpec.EXACTLY) {
+        if (isFullScreen()) {
+            // stretch in full screen mode
+            height = heightSpecSize;
+            width = widthSpecSize;
+        } else if (widthSpecMode == MeasureSpec.EXACTLY && heightSpecMode == MeasureSpec.EXACTLY) {
             // the size is fixed
             width = widthSpecSize;
             height = heightSpecSize;
@@ -395,14 +408,6 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
         player.setScreenOnWhilePlaying(true);
         player.prepareAsync();
         state = State.PREPARING;
-    }
-
-    private void toggleControlsVisibility() {
-        if (controls.isShowing()) {
-            controls.hide();
-        } else {
-            controls.show();
-        }
     }
 
     private SurfaceHolder.Callback callback = new SurfaceHolder.Callback() {

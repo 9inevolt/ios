@@ -30,6 +30,7 @@ public class FullMediaController extends FrameLayout implements View.OnClickList
         super(context);
         mContext = context;
         handler = new Handler(this);
+        setOnClickListener(this);
     }
 
     @Override
@@ -60,6 +61,14 @@ public class FullMediaController extends FrameLayout implements View.OnClickList
 
     public boolean isShowing() {
         return mShowing;
+    }
+
+    public void toggleVisibility() {
+        if (isShowing()) {
+            hide();
+        } else {
+            show();
+        }
     }
 
     /**
@@ -111,6 +120,11 @@ public class FullMediaController extends FrameLayout implements View.OnClickList
     @Override
     public void onClick(View v)
     {
+        if (v == this) {
+            toggleVisibility();
+            return;
+        }
+
         switch (v.getId()) {
             case R.id.play_pause_button:
                 doPauseResume();
@@ -122,13 +136,6 @@ public class FullMediaController extends FrameLayout implements View.OnClickList
                 doSettings();
                 break;
         }
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event)
-    {
-        show();
-        return true;
     }
 
     protected View makeControllerView() {
@@ -223,10 +230,11 @@ public class FullMediaController extends FrameLayout implements View.OnClickList
     public interface OnFullScreenListener
     {
         /**
-         * @param mp        the MediaPlayer associated with this callback
-         * @param full      true if full screen requested
+         * @param mp            the MediaPlayer associated with this callback
+         * @param full          true if full screen requested
+         * @param userInitiated true if user initiated the request
          */
-        public void onFullScreen(MediaPlayer mp, boolean full);
+        public void onFullScreen(MediaPlayer mp, boolean full, boolean userInitiated);
     }
 
     public interface OnSettingsListener

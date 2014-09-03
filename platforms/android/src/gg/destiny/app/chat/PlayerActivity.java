@@ -71,14 +71,23 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
     }
 
     @Override
-    public void onFullScreen(MediaPlayer mp, boolean full)
+    public void onFullScreen(MediaPlayer mp, boolean full, boolean userInitiated)
     {
         if (full) {
             webView.setVisibility(View.GONE);
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            getActionBar().hide();
+            if (userInitiated) {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            }
         } else {
             webView.setVisibility(View.VISIBLE);
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            getActionBar().show();
+            if (userInitiated) {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            }
         }
     }
 
