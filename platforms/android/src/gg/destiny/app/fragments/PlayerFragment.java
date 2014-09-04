@@ -159,8 +159,8 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
 
     private void play(String url) throws IOException
     {
-        playerView.setVideoURI(url);
         playerView.start();
+        playerView.setVideoURI(url);
     }
 
     @Override

@@ -11,6 +11,7 @@ import android.content.res.Configuration;
 import android.media.*;
 import android.media.MediaPlayer.*;
 import android.net.Uri;
+import android.os.Handler;
 import android.util.*;
 import android.view.*;
 
@@ -18,10 +19,12 @@ import android.view.*;
 public class PlayerView extends SurfaceView implements FullMediaPlayerControl
 {
     enum State {
-        ERROR, IDLE, PREPARING, PREPARED, PLAYING, PAUSED, COMPLETE
+        ERROR, RESETTING, IDLE, PREPARING, PREPARED, PLAYING, PAUSED, COMPLETE
     }
 
     private static final String TAG = "PlayerView";
+
+    private long prePrepare;
 
     private int mVideoWidth;
     private int mVideoHeight;
@@ -103,8 +106,23 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
     {
         return player != null &&
             state != State.ERROR &&
+            state != State.RESETTING &&
             state != State.IDLE &&
             state != State.PREPARING;
+    }
+
+    @Override
+    public boolean isBuffering()
+    {
+        if (state == State.PREPARING)
+            return true;
+
+        if (state == State.IDLE || state == State.RESETTING) {
+            return targetState == State.PLAYING ||
+                   targetState == State.PAUSED;
+        }
+
+        return false;
     }
 
     @Override
@@ -370,6 +388,7 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
             player.setOnVideoSizeChangedListener(videoSizeChangedListener);
             player.setOnCompletionListener(completionListener);
             player.setOnBufferingUpdateListener(bufferingUpdateListener);
+            player.setOnInfoListener(infoListener);
             player.setAudioStreamType(AudioManager.STREAM_MUSIC);
         }
 
@@ -378,15 +397,70 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
 
     private void releasePlayer(boolean clearTarget)
     {
+        if (clearTarget) {
+            targetState = State.IDLE;
+        }
+
         if (player != null) {
+            state = State.RESETTING;
             player.reset();
             player.release();
             player = null;
-            state = State.IDLE;
-            if (clearTarget) {
-                targetState = State.IDLE;
-            }
         }
+
+        state = State.IDLE;
+    }
+
+    private void releasePlayerAsync(final boolean clearTarget, final Uri playUri)
+    {
+        state = State.RESETTING;
+
+        if (clearTarget) {
+            targetState = State.IDLE;
+        }
+
+        controls.show();
+
+        final Handler h = new Handler();
+
+        new Thread(new Runnable() {
+            @Override
+            public void run()
+            {
+                if (player != null) {
+                    player.reset();
+                }
+                h.post(new Runnable() {
+                   @Override
+                    public void run()
+                    {
+                        playerReset();
+                        initPlayer();
+                        player.setDisplay(holder);
+                        try {
+                            player.setDataSource(getContext(), playUri);
+                        } catch (IOException e) {
+                            Log.e(TAG, "Error during async play", e);
+                        }
+                        player.setScreenOnWhilePlaying(true);
+
+                        prePrepare = System.currentTimeMillis();
+                        player.prepareAsync();
+
+                        state = State.PREPARING;
+                    }
+                });
+            }
+        }).start();
+    }
+
+    private void playerReset()
+    {
+        if (player != null) {
+            player.release();
+            player = null;
+        }
+        state = State.IDLE;
     }
 
     private void play(String url) throws IOException
@@ -401,13 +475,8 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
             return;
 
         Log.d(TAG, "play: " + playUri);
-        releasePlayer(false);
-        initPlayer();
-        player.setDisplay(holder);
-        player.setDataSource(getContext(), playUri);
-        player.setScreenOnWhilePlaying(true);
-        player.prepareAsync();
-        state = State.PREPARING;
+
+        releasePlayerAsync(false, playUri);
     }
 
     private SurfaceHolder.Callback callback = new SurfaceHolder.Callback() {
@@ -442,6 +511,9 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
         @Override
         public void onPrepared(MediaPlayer mp)
         {
+            long prepareTime = System.currentTimeMillis() - prePrepare;
+            Log.d(TAG, "Prepare time elapsed: " + prepareTime + "ms");
+
             state = State.PREPARED;
             if (targetState == State.PLAYING) {
                 player.start();
@@ -515,8 +587,24 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
             @Override
             public boolean onInfo(MediaPlayer mp, int what, int extra)
             {
-                // TODO Auto-generated method stub
-                return false;
+                switch (what) {
+                    case MediaPlayer.MEDIA_INFO_METADATA_UPDATE:
+                        Log.d(TAG, "Info Metadata Update: " + extra);
+                        break;
+                    case MediaPlayer.MEDIA_INFO_BUFFERING_START:
+                        Log.d(TAG, "Info Buffering Start: " + extra);
+                        break;
+                    case MediaPlayer.MEDIA_INFO_BUFFERING_END:
+                        Log.d(TAG, "Info Buffering End: " + extra);
+                        break;
+                    case MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START:
+                        Log.d(TAG, "Info Video Rendering Start: " + extra);
+                        break;
+                    default:
+                        return false;
+                }
+
+                return true;
             }
         };
 }

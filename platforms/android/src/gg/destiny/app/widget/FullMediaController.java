@@ -21,6 +21,8 @@ public class FullMediaController extends FrameLayout implements View.OnClickList
     private ViewGroup mAnchor;
     private boolean mShowing;
     private FullMediaPlayerControl mPlayer;
+    private View mControlsView;
+    private View mBufferingProgress;
     private ImageButton mPauseButton;
     private ImageButton mFullScreenButton;
     private ImageButton mSettingsButton;
@@ -44,6 +46,7 @@ public class FullMediaController extends FrameLayout implements View.OnClickList
         mPlayer = player;
         updatePausePlay();
         updateFullScreen();
+        updateBuffering();
     }
 
     public void setAnchorView(ViewGroup view) {
@@ -64,7 +67,7 @@ public class FullMediaController extends FrameLayout implements View.OnClickList
     }
 
     public void toggleVisibility() {
-        if (isShowing()) {
+        if (isShowing() && (mPlayer == null || !mPlayer.isBuffering())) {
             hide();
         } else {
             show();
@@ -115,16 +118,12 @@ public class FullMediaController extends FrameLayout implements View.OnClickList
 
         updatePausePlay();
         updateFullScreen();
+        updateBuffering();
     }
 
     @Override
     public void onClick(View v)
     {
-        if (v == this) {
-            toggleVisibility();
-            return;
-        }
-
         switch (v.getId()) {
             case R.id.play_pause_button:
                 doPauseResume();
@@ -134,6 +133,9 @@ public class FullMediaController extends FrameLayout implements View.OnClickList
                 break;
             case R.id.settings_button:
                 doSettings();
+                break;
+            case R.id.media_controls:
+                toggleVisibility();
                 break;
         }
     }
@@ -162,6 +164,13 @@ public class FullMediaController extends FrameLayout implements View.OnClickList
         if (mSettingsButton != null) {
             mSettingsButton.setOnClickListener(this);
         }
+
+        mControlsView = v.findViewById(R.id.media_controls);
+        if (mControlsView != null) {
+            mControlsView.setOnClickListener(this);
+        }
+
+        mBufferingProgress = v.findViewById(R.id.media_buffering);
     }
 
     private void updatePausePlay() {
@@ -197,6 +206,20 @@ public class FullMediaController extends FrameLayout implements View.OnClickList
             mFullScreenButton.setImageResource(R.drawable.player_full_off);
         } else {
             mFullScreenButton.setImageResource(R.drawable.player_full_on);
+        }
+    }
+
+    private void updateBuffering() {
+        if (mPlayer == null || mControlsView == null || mBufferingProgress == null)
+            return;
+
+        if (mPlayer.isBuffering()) {
+            mControlsView.setVisibility(View.GONE);
+            mBufferingProgress.setVisibility(View.VISIBLE);
+            handler.removeMessages(MESSAGE_HIDE);
+        } else {
+            mControlsView.setVisibility(View.VISIBLE);
+            mBufferingProgress.setVisibility(View.GONE);
         }
     }
 
