@@ -34,6 +34,7 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
     private SurfaceHolder holder = null;
     private Uri playUri = null;
     private boolean fullScreen, userFullScreen;
+    private OnErrorListener onErrorListener;
     private OnCompletionListener onCompletionListener;
     private OnFullScreenListener onFullScreenListener;
     private OnSettingsListener onSettingsListener;
@@ -68,6 +69,11 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
         play(uri);
         requestLayout();
         invalidate();
+    }
+
+    public void setOnErrorListener(OnErrorListener l)
+    {
+        onErrorListener = l;
     }
 
     public void setOnCompletionListener(OnCompletionListener l)
@@ -445,6 +451,7 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
                         player.setScreenOnWhilePlaying(true);
 
                         prePrepare = System.currentTimeMillis();
+                        Log.d(TAG, "prepareAsync()");
                         player.prepareAsync();
 
                         state = State.PREPARING;
@@ -531,8 +538,21 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
         @Override
         public boolean onError(MediaPlayer mp, int what, int extra)
         {
-            Log.e(TAG, "what: " + what + ", extra: " + extra);
-            return false;
+            Log.e(TAG, "Error: what: " + what + ", extra: " + extra);
+
+            boolean handled = false;
+
+            if (onErrorListener != null) {
+                handled = onErrorListener.onError(mp, what, extra);
+            }
+
+            if (handled) {
+                state = State.ERROR;
+                if (controls != null)
+                    controls.show(0);
+            }
+
+            return handled;
         }
     };
 
@@ -558,6 +578,13 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
         new MediaPlayer.OnCompletionListener() {
         @Override
         public void onCompletion(MediaPlayer mp) {
+            Log.d(TAG, "Completion");
+
+            if (state == State.ERROR) {
+                // Returning true from onError doesn't seem to work
+                return;
+            }
+
             state = State.COMPLETE;
             targetState = State.COMPLETE;
             if (controls != null) {

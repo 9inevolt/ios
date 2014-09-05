@@ -114,7 +114,9 @@ public class FullMediaController extends FrameLayout implements View.OnClickList
         }
 
         handler.removeMessages(MESSAGE_HIDE);
-        handler.sendMessageDelayed(handler.obtainMessage(MESSAGE_HIDE), timeout);
+        if (timeout != 0) {
+            handler.sendMessageDelayed(handler.obtainMessage(MESSAGE_HIDE), timeout);
+        }
 
         updatePausePlay();
         updateFullScreen();

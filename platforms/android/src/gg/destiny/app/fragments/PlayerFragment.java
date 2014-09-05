@@ -4,8 +4,7 @@ import gg.destiny.app.chat.App;
 import gg.destiny.app.chat.R;
 import gg.destiny.app.parsers.extm3u.StreamInfo;
 import gg.destiny.app.preference.*;
-import gg.destiny.app.util.StreamEventListener;
-import gg.destiny.app.util.StreamWatcher;
+import gg.destiny.app.util.*;
 import gg.destiny.app.widget.FullMediaController.OnFullScreenListener;
 import gg.destiny.app.widget.FullMediaController.OnSettingsListener;
 import gg.destiny.app.widget.*;
@@ -13,14 +12,17 @@ import gg.destiny.app.widget.*;
 import java.io.IOException;
 
 import android.annotation.TargetApi;
+import android.app.AlertDialog;
 import android.app.Fragment;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.media.MediaPlayer;
+import android.media.*;
 import android.media.MediaPlayer.OnCompletionListener;
-import android.os.*;
-import android.os.Handler.Callback;
+import android.media.MediaPlayer.OnErrorListener;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.*;
 import android.view.View.OnTouchListener;
@@ -29,8 +31,8 @@ import android.widget.ImageView.ScaleType;
 
 @TargetApi(14)
 public class PlayerFragment extends Fragment implements OnTouchListener,
-        QualityPreferenceChangeListener, OnSettingsListener, Callback, OnCompletionListener,
-        StreamEventListener
+        QualityPreferenceChangeListener, OnSettingsListener, OnCompletionListener,
+        StreamEventListener, OnErrorListener
 {
     public static final String TAG = "PlayerFragment";
 
@@ -72,6 +74,7 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
         playerView.setOnFullScreenListener(onFullScreenListener);
         playerView.setOnSettingsListener(this);
         playerView.setOnCompletionListener(this);
+        playerView.setOnErrorListener(this);
     }
 
     @Override
@@ -119,6 +122,19 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
     }
 
     @Override
+    public boolean onError(MediaPlayer mp, int what, int extra)
+    {
+        if (what == MediaPlayer.MEDIA_ERROR_SERVER_DIED) {
+            // Force completion to allow stream restart
+            return false;
+        }
+
+        showQualityErrorDialog();
+
+        return true;
+    }
+
+    @Override
     public boolean onTouch(View v, MotionEvent event)
     {
         return false;
@@ -129,12 +145,6 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
     {
         preferredQuality = quality;
         playQuality(quality);
-    }
-
-    @Override
-    public boolean handleMessage(Message msg)
-    {
-        return false;
     }
 
     public void setOnFullScreenListener(OnFullScreenListener l)
@@ -167,9 +177,7 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
     public void online()
     {
         if (!playQuality(preferredQuality)) {
-            Toast.makeText(getActivity(),
-                "Preferred quality \"" + preferredQuality + "\" is not available. " +
-                "Please select another quality.", Toast.LENGTH_SHORT).show();
+            showQualityUnavailableDialog();
         }
 
         playerView.setVisibility(View.VISIBLE);
@@ -197,5 +205,53 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
         Drawable d = new BitmapDrawable(getResources(), bm);
         offlineImageView.setImageDrawable(d);
         offlineImageView.setScaleType(ScaleType.CENTER_INSIDE);
+    }
+
+    private void showQualityUnavailableDialog()
+    {
+        StringBuilder sb = new StringBuilder("Preferred quality \"")
+            .append(preferredQuality).append("\" is not available.");
+
+        if (Qualities.isVideoQuality(preferredQuality) &&
+                Qualities.numVideoQualities(watcher.getQualities()) > 0)
+        {
+            sb.append(" Please select another quality.");
+        }
+
+        new AlertDialog.Builder(getActivity()).setMessage(sb.toString())
+            .setCancelable(false)
+            .setNeutralButton("OK", new OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which)
+                {
+                    dialog.dismiss();
+                }
+            })
+            .show();
+    }
+
+    private void showQualityErrorDialog()
+    {
+        StringBuilder sb = new StringBuilder("An error occurred playing quality \"")
+            .append(preferredQuality).append("\".");
+
+        if (Qualities.isVideoQuality(preferredQuality) &&
+                Qualities.numVideoQualities(watcher.getQualities()) > 1)
+        {
+            sb.append(" Please select another quality.");
+        }
+
+        new AlertDialog.Builder(getActivity()).setMessage(sb.toString())
+            .setTitle("Error")
+            .setIcon(R.drawable.dialog_alert_dark)
+            .setCancelable(false)
+            .setNeutralButton("OK", new OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which)
+                {
+                    dialog.dismiss();
+                }
+            })
+            .show();
     }
 }

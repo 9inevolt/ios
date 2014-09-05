@@ -8,6 +8,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.net.Uri;
+import android.util.Log;
 
 public final class KrakenApi
 {
@@ -90,6 +91,8 @@ public final class KrakenApi
         String url = String.format(
                 "http://usher.twitch.tv/select/%s.json?nauthsig=%s&nauth=%s&allow_source=true&allow_audio_only=true",
                 Uri.encode(channel), Uri.encode(token.sig), Uri.encode(token.token));
+
+        Log.d("KrakenApi", "Usher url: " + url);
 
         return getString(url);
     }
