@@ -11,12 +11,13 @@ import android.net.Uri;
 
 public final class KrakenApi
 {
-    public static final int CONNECT_TIMEOUT = 10000;
-    public static final int READ_TIMEOUT = 10000;
+    public static final int CONNECT_TIMEOUT = 5000;
+    public static final int READ_TIMEOUT = 5000;
 
     public static final JSONObject getChannel(String channel) throws IOException, JSONException
     {
-        String url = String.format("https://api.twitch.tv/kraken/channels/%s", channel);
+        String url = String.format("https://api.twitch.tv/kraken/channels/%s",
+                Uri.encode(channel));
 
         String obj = getString(url);
 
@@ -28,9 +29,36 @@ public final class KrakenApi
 
     public static final JSONObject getStream(String channel) throws IOException, JSONException
     {
-        String url = String.format("https://api.twitch.tv/kraken/streams/%s", channel);
+        String url = String.format("https://api.twitch.tv/kraken/streams/%s",
+                Uri.encode(channel));
 
-        String obj = getString(url, false);
+        String obj = getString(url);
+
+        if (obj == null)
+            return null;
+
+        return new JSONObject(obj);
+    }
+
+    public static final JSONObject searchChannels(String query, int limit) throws IOException, JSONException
+    {
+        String url = String.format("https://api.twitch.tv/kraken/search/channels?q=%s&limit=%d",
+                Uri.encode(query), limit);
+
+        String obj = getString(url);
+
+        if (obj == null)
+            return null;
+
+        return new JSONObject(obj);
+    }
+
+    public static final JSONObject searchStreams(String query) throws IOException, JSONException
+    {
+        String url = String.format("https://api.twitch.tv/kraken/search/streams?q=%s",
+                Uri.encode(query));
+
+        String obj = getString(url);
 
         if (obj == null)
             return null;
@@ -40,7 +68,8 @@ public final class KrakenApi
 
     public static final ChannelAccessToken getChannelAccessToken(String channel) throws IOException, JSONException
     {
-        String url = String.format("http://api.twitch.tv/api/channels/%s/access_token", channel);
+        String url = String.format("http://api.twitch.tv/api/channels/%s/access_token",
+                Uri.encode(channel));
 
         String token = getString(url);
 
@@ -60,7 +89,7 @@ public final class KrakenApi
 
         String url = String.format(
                 "http://usher.twitch.tv/select/%s.json?nauthsig=%s&nauth=%s&allow_source=true&allow_audio_only=true",
-                channel, Uri.encode(token.sig), Uri.encode(token.token));
+                Uri.encode(channel), Uri.encode(token.sig), Uri.encode(token.token));
 
         return getString(url);
     }
@@ -74,22 +103,16 @@ public final class KrakenApi
 
         String url = String.format(
                 "http://usher.twitch.tv/api/channel/hls/%s.m3u8?sig=%s&token=%s&allow_source=true&allow_audio_only=true",
-                channel, Uri.encode(token.sig), Uri.encode(token.token));
+                Uri.encode(channel), Uri.encode(token.sig), Uri.encode(token.token));
 
         return getString(url);
     }
 
     private static final String getString(String url) throws IOException
     {
-        return getString(url, true);
-    }
-
-    private static final String getString(String url, boolean useCaches) throws IOException
-    {
         HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
         conn.setConnectTimeout(CONNECT_TIMEOUT);
         conn.setReadTimeout(READ_TIMEOUT);
-        conn.setUseCaches(useCaches);
 
         try {
             if (conn.getResponseCode() == 200) {

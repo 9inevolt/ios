@@ -1,5 +1,6 @@
 package gg.destiny.app.chat;
 
+import gg.destiny.app.content.AppSearchRecentSuggestionProvider;
 import gg.destiny.app.fragments.PlayerFragment;
 import gg.destiny.app.preference.ChannelPreferenceChangeListener;
 import gg.destiny.app.widget.FullMediaController.OnFullScreenListener;
@@ -71,6 +72,17 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
     }
 
     @Override
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
+        if (item.getItemId() == R.id.menu_clear_history) {
+            AppSearchRecentSuggestionProvider.getSuggestions(this).clearHistory();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
     public void onFullScreen(MediaPlayer mp, boolean full, boolean userInitiated)
     {
         if (full) {
@@ -122,6 +134,7 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
             if (query != null && !"".equals(query.trim())) {
                 App.getChannelPreferenceHelper().setPreferenceValue(query);
                 searchMenuItem.collapseActionView();
+                AppSearchRecentSuggestionProvider.getSuggestions(this).saveRecentQuery(query, null);
             }
         }
     }

@@ -11,21 +11,33 @@ public class Channel
         obj = jObj;
     }
 
+    public String getDisplayName()
+    {
+        return optString("display_name");
+    }
+
+    public String getName()
+    {
+        return optString("name");
+    }
+
     public String getStatus()
     {
-        return obj.isNull("status") ? null
-                : obj.optString("status", "");
+        return optString("status");
     }
 
     public String getLogo()
     {
-        return obj.isNull("logo") ? null
-                : obj.optString("logo", "");
+        return optString("logo");
     }
 
     public String getVideoBanner()
     {
-        return obj.isNull("video_banner") ? null
-                : obj.optString("video_banner", "");
+        return optString("video_banner");
+    }
+
+    private String optString(String name) {
+        return obj.isNull(name) ? null
+                : obj.optString(name, "");
     }
 }

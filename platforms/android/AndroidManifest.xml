@@ -29,5 +29,11 @@
                 android:theme="@android:style/Theme.NoTitleBar"
                 android:launchMode="singleTop">
         </activity>
+        <provider android:name="gg.destiny.app.content.AppSearchRecentSuggestionProvider"
+                android:authorities="gg.destiny.app.content.recentsearchprovider"
+                android:exported="false" />
+        <provider android:name="gg.destiny.app.content.TwitchSearchSuggestionProvider"
+                android:authorities="gg.destiny.app.content.twitchsearchprovider"
+                android:exported="false" />
     </application>
 </manifest>
