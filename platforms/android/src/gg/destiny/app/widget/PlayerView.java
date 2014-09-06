@@ -540,6 +540,11 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
         {
             Log.e(TAG, "Error: what: " + what + ", extra: " + extra);
 
+            if (state == State.ERROR) {
+                // Prevent redundant error handling
+                return false;
+            }
+
             boolean handled = false;
 
             if (onErrorListener != null) {

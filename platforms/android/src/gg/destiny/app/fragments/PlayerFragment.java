@@ -22,7 +22,7 @@ import android.graphics.drawable.Drawable;
 import android.media.*;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnErrorListener;
-import android.os.Bundle;
+import android.os.*;
 import android.util.Log;
 import android.view.*;
 import android.view.View.OnTouchListener;
@@ -32,9 +32,10 @@ import android.widget.ImageView.ScaleType;
 @TargetApi(14)
 public class PlayerFragment extends Fragment implements OnTouchListener,
         QualityPreferenceChangeListener, OnSettingsListener, OnCompletionListener,
-        StreamEventListener, OnErrorListener
+        StreamEventListener, OnErrorListener, NetworkListener
 {
     public static final String TAG = "PlayerFragment";
+    private static final long DIALOG_DELAY = 1000;
 
     private String preferredChannel;
     private String preferredQuality;
@@ -42,6 +43,8 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
     private ImageView offlineImageView = null;
     private OnFullScreenListener onFullScreenListener;
     private StreamWatcher watcher;
+    private boolean isConnected;
+    private Handler handler;
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -57,6 +60,7 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
         preferredChannel = channelHelper.getPreferenceValue();
 
         watcher = new StreamWatcher(preferredChannel);
+        handler = new Handler();
     }
 
     @Override
@@ -81,16 +85,18 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
     public void onStart()
     {
         super.onStart();
-        watcher.start(this);
+        App.getNetworkHelper().addListener(this);
+        onConnectivityChanged(App.getNetworkHelper().isConnected());
 
-        if (watcher.isOnline()) {
+        if (isConnected && watcher.isOnline()) {
             try {
                 playerView.resume();
             } catch (IOException e) {
                 Log.e(TAG, "error on resume", e);
-                watcher.forceOffline();
+                watcher.forceOffline(true);
             }
         }
+
     }
 
     @Override
@@ -98,6 +104,7 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
     {
         playerView.suspend();
         watcher.stop();
+        App.getNetworkHelper().removeListener(this);
         super.onStop();
     }
 
@@ -116,9 +123,27 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
     }
 
     @Override
+    public void onConnectivityChanged(boolean connected)
+    {
+        isConnected = connected;
+
+        if (isConnected) {
+            Log.d(TAG, "Connected");
+            watcher.start(this);
+        } else {
+            Log.d(TAG, "Disconnected");
+            watcher.forceOffline(false);
+            watcher.stop();
+            offline();
+            cancelQualityErrorDialog();
+            showDisconnectedToast();
+        }
+    }
+
+    @Override
     public void onCompletion(MediaPlayer mp)
     {
-        watcher.forceOffline();
+        watcher.forceOffline(true);
     }
 
     @Override
@@ -207,6 +232,12 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
         offlineImageView.setScaleType(ScaleType.CENTER_INSIDE);
     }
 
+    private void showDisconnectedToast()
+    {
+        Toast.makeText(getActivity(), "No connection to server.", Toast.LENGTH_SHORT)
+            .show();
+    }
+
     private void showQualityUnavailableDialog()
     {
         StringBuilder sb = new StringBuilder("Preferred quality \"")
@@ -232,26 +263,39 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
 
     private void showQualityErrorDialog()
     {
-        StringBuilder sb = new StringBuilder("An error occurred playing quality \"")
-            .append(preferredQuality).append("\".");
-
-        if (Qualities.isVideoQuality(preferredQuality) &&
-                Qualities.numVideoQualities(watcher.getQualities()) > 1)
-        {
-            sb.append(" Please select another quality.");
-        }
-
-        new AlertDialog.Builder(getActivity()).setMessage(sb.toString())
-            .setTitle("Error")
-            .setIcon(R.drawable.dialog_alert_dark)
-            .setCancelable(false)
-            .setNeutralButton("OK", new OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which)
-                {
-                    dialog.dismiss();
-                }
-            })
-            .show();
+        handler.postDelayed(showQualityErrorRunnable, DIALOG_DELAY);
     }
+
+    private void cancelQualityErrorDialog()
+    {
+        handler.removeCallbacks(showQualityErrorRunnable);
+    }
+
+    private Runnable showQualityErrorRunnable = new Runnable() {
+        @Override
+        public void run()
+        {
+            StringBuilder sb = new StringBuilder("An error occurred playing quality \"")
+                .append(preferredQuality).append("\".");
+
+            if (Qualities.isVideoQuality(preferredQuality) &&
+                    Qualities.numVideoQualities(watcher.getQualities()) > 1)
+            {
+                sb.append(" Please select another quality.");
+            }
+
+            new AlertDialog.Builder(getActivity()).setMessage(sb.toString())
+                .setTitle("Error")
+                .setIcon(R.drawable.dialog_alert_dark)
+                .setCancelable(false)
+                .setNeutralButton("OK", new OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which)
+                    {
+                        dialog.dismiss();
+                    }
+                })
+                .show();
+        }
+    };
 }

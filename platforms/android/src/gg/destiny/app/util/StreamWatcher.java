@@ -43,6 +43,8 @@ public class StreamWatcher
     public StreamWatcher(String watchChannel)
     {
         channel = watchChannel;
+        executor = Executors.newSingleThreadScheduledExecutor();
+        handler = new StreamEventHandler(new DummyListener());
         initStreamRunnable();
         initGetMasterPlaylistRunnable();
         initGetChannelRunnable();
@@ -92,13 +94,16 @@ public class StreamWatcher
         return offlineImage;
     }
 
-    public void forceOffline()
+    public void forceOffline(boolean connected)
     {
         stop();
-        start(handler);
+
+        if (connected) {
+            start(handler);
+        }
 
         status = Status.UNKNOWN;
-        offline();
+        offline(connected);
     }
 
     public boolean isOnline()
@@ -108,7 +113,14 @@ public class StreamWatcher
 
     private void offline()
     {
-        executor.schedule(getStreamRunnable, STATUS_DELAY, TimeUnit.MILLISECONDS);
+        offline(true);
+    }
+
+    private void offline(boolean connected)
+    {
+        if (connected) {
+            executor.schedule(getStreamRunnable, STATUS_DELAY, TimeUnit.MILLISECONDS);
+        }
 
         if (status == Status.OFFLINE) {
             Log.d(TAG, channel + " still offline");
@@ -118,7 +130,7 @@ public class StreamWatcher
         status = Status.OFFLINE;
         masterPlaylist = null;
 
-        if (!offlineImageLoaded) {
+        if (connected && !offlineImageLoaded) {
             getChannelFuture = executor.submit(getChannelRunnable);
         }
 
@@ -235,11 +247,6 @@ public class StreamWatcher
                     Log.e(TAG, "Kraken error", e);
                 }
 
-                // TODO ?
-    //            if (playerView.isInPlaybackState()) {
-    //                playerView.stop();
-    //            }
-
                 if (videoChannel == null) {
                     return;
                 }
@@ -265,5 +272,25 @@ public class StreamWatcher
                 }
             }
         };
+    }
+
+    private static class DummyListener implements StreamEventListener {
+        @Override
+        public void online()
+        {
+            // no-op
+        }
+
+        @Override
+        public void offline()
+        {
+            // no-op
+        }
+
+        @Override
+        public void offlineImage(Bitmap bm)
+        {
+            // no-op
+        }
     }
 }

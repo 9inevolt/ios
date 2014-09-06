@@ -29,6 +29,11 @@
                 android:theme="@android:style/Theme.NoTitleBar"
                 android:launchMode="singleTop">
         </activity>
+        <receiver android:name="gg.destiny.app.util.NetworkReceiver">
+            <intent-filter>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+            </intent-filter>
+        </receiver>
         <provider android:name="gg.destiny.app.content.AppSearchRecentSuggestionProvider"
                 android:authorities="gg.destiny.app.content.recentsearchprovider"
                 android:exported="false" />

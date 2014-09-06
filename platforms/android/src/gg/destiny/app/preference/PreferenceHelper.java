@@ -30,23 +30,25 @@ public abstract class PreferenceHelper<T> implements OnSharedPreferenceChangeLis
         if (preferenceName.equals(key)) {
             PreferenceChangeListener<T> listener;
             Iterator<PreferenceChangeListener<T>> i;
-            for (i = listeners.values().iterator(); i.hasNext(); ) {
-                listener = i.next();
-                if (!listener.isValid()) {
-                    i.remove();
-                } else {
-                    listener.onPreferenceChanged(getPreferenceValue());
+            synchronized (this) {
+                for (i = listeners.values().iterator(); i.hasNext(); ) {
+                    listener = i.next();
+                    if (!listener.isValid()) {
+                        i.remove();
+                    } else {
+                        listener.onPreferenceChanged(getPreferenceValue());
+                    }
                 }
             }
         }
     }
 
-    protected void addListener(Object key, PreferenceChangeListener<T> listener)
+    protected synchronized void addListener(Object key, PreferenceChangeListener<T> listener)
     {
         listeners.put(key, listener);
     }
 
-    protected void removeListener(Object key)
+    protected synchronized void removeListener(Object key)
     {
         listeners.remove(key);
     }
