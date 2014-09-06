@@ -5,4 +5,6 @@
     <string name="search_title">Search</string>
     <string name="search_hint">Channel name</string>
     <string name="clear_history_title">Clear history</string>
+    <string name="collapse_player_title">Hide player</string>
+    <string name="expand_player_title">Show player</string>
 </resources>

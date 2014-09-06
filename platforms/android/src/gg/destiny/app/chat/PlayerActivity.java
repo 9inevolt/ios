@@ -12,12 +12,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.cordova.*;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import android.annotation.TargetApi;
-import android.app.Activity;
-import android.app.SearchManager;
+import android.app.*;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -37,7 +34,7 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
     private CordovaWebView webView;
     private View webOffline, webLoading;
     private PlayerFragment player;
-    private MenuItem searchMenuItem;
+    private MenuItem searchMenuItem, collapsePlayerMenuItem;
 
     @Override
     protected void onCreate(Bundle bundle)
@@ -88,6 +85,15 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.player_menu, menu);
 
+        collapsePlayerMenuItem = menu.findItem(R.id.menu_collapse_player);
+        if (player.isHidden()) {
+            collapsePlayerMenuItem.setIcon(R.drawable.player_expand);
+            collapsePlayerMenuItem.setTitle(R.string.expand_player_title);
+        } else {
+            collapsePlayerMenuItem.setIcon(R.drawable.player_collapse);
+            collapsePlayerMenuItem.setTitle(R.string.collapse_player_title);
+        }
+
         SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
         searchMenuItem = menu.findItem(R.id.menu_search);
         SearchView searchView = (SearchView) searchMenuItem.getActionView();
@@ -103,6 +109,9 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
     {
         if (item.getItemId() == R.id.menu_clear_history) {
             AppSearchRecentSuggestionProvider.getSuggestions(this).clearHistory();
+            return true;
+        } else if (item.getItemId() == R.id.menu_collapse_player) {
+            collapsePlayer(!player.isHidden());
             return true;
         }
 
@@ -130,6 +139,7 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                     WindowManager.LayoutParams.FLAG_FULLSCREEN);
             getActionBar().hide();
+            collapsePlayer(false);
             if (userInitiated) {
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
             }
@@ -240,5 +250,20 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
             return defaultValue;
         }
         return p;
+    }
+
+    private void collapsePlayer(boolean collapse)
+    {
+        FragmentTransaction ft = getFragmentManager().beginTransaction();
+        if (collapse) {
+            ft.hide(player);
+            collapsePlayerMenuItem.setIcon(R.drawable.player_expand);
+            collapsePlayerMenuItem.setTitle(R.string.expand_player_title);
+        } else {
+            ft.show(player);
+            collapsePlayerMenuItem.setIcon(R.drawable.player_collapse);
+            collapsePlayerMenuItem.setTitle(R.string.collapse_player_title);
+        }
+        ft.commit();
     }
 }
