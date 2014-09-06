@@ -8,8 +8,28 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
-    <org.apache.cordova.CordovaWebView android:id="@+id/web_view"
+    <FrameLayout android:id="@+id/web_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1">
+        
+        <org.apache.cordova.CordovaWebView android:id="@+id/web_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+        
+        <ProgressBar android:id="@+id/web_loading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            style="?android:progressBarStyle"
+            android:indeterminateOnly="true" />
+        
+        <ImageView android:id="@+id/web_offline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|right"
+            android:src="@drawable/web_offline"
+            android:visibility="gone" />
+        
+    </FrameLayout>
 </LinearLayout>

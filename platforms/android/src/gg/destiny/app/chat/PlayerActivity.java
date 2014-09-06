@@ -3,12 +3,16 @@ package gg.destiny.app.chat;
 import gg.destiny.app.content.AppSearchRecentSuggestionProvider;
 import gg.destiny.app.fragments.PlayerFragment;
 import gg.destiny.app.preference.ChannelPreferenceChangeListener;
+import gg.destiny.app.util.NetworkListener;
 import gg.destiny.app.widget.FullMediaController.OnFullScreenListener;
 
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.cordova.*;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -24,11 +28,13 @@ import android.widget.SearchView;
 
 @TargetApi(14)
 public class PlayerActivity extends Activity implements CordovaInterface, OnFullScreenListener,
-        ChannelPreferenceChangeListener
+        ChannelPreferenceChangeListener, NetworkListener
 {
     public static final String TAG = "PlayerActivity";
     private final ExecutorService threadPool = Executors.newCachedThreadPool();
-    CordovaWebView webView;
+    private View webContainer;
+    private CordovaWebView webView;
+    private View webOffline, webLoading;
     private PlayerFragment player;
     private MenuItem searchMenuItem;
 
@@ -50,11 +56,31 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
         player.setOnFullScreenListener(this);
 
         Config.init(this);
+        webContainer = findViewById(R.id.web_container);
         webView = (CordovaWebView) findViewById(R.id.web_view);
+        webOffline = findViewById(R.id.web_offline);
+        webLoading = findViewById(R.id.web_loading);
         //webView.loadUrl(Config.getStartUrl());
         webView.loadUrl("file:///android_asset/www/chat-lite.html");
 
         App.getChannelPreferenceHelper().addListener(this);
+    }
+
+    @Override
+    protected void onPause()
+    {
+        super.onPause();
+        App.getNetworkHelper().removeListener(this);
+        webView.handlePause(true);
+    }
+
+    @Override
+    protected void onResume()
+    {
+        super.onResume();
+        App.getNetworkHelper().addListener(this);
+        webView.handleResume(true, true);
+        onConnectivityChanged(App.getNetworkHelper().isConnected());
     }
 
     @Override
@@ -83,10 +109,23 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
     }
 
     @Override
+    public void onConnectivityChanged(boolean connected)
+    {
+        if (connected) {
+            if (webOffline.getVisibility() == View.VISIBLE) {
+                webView.reload();
+            }
+            webOffline.setVisibility(View.GONE);
+        } else {
+            webOffline.setVisibility(View.VISIBLE);
+        }
+    }
+
+    @Override
     public void onFullScreen(MediaPlayer mp, boolean full, boolean userInitiated)
     {
         if (full) {
-            webView.setVisibility(View.GONE);
+            webContainer.setVisibility(View.GONE);
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                     WindowManager.LayoutParams.FLAG_FULLSCREEN);
             getActionBar().hide();
@@ -94,7 +133,7 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
             }
         } else {
-            webView.setVisibility(View.VISIBLE);
+            webContainer.setVisibility(View.VISIBLE);
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
             getActionBar().show();
             if (userInitiated) {
@@ -157,15 +196,21 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
         return this;
     }
 
-    @Override
-    public Object onMessage(String id, Object data)
-    {
-        //Log.d(TAG, "onMessage(" + id + "," + data + ")");
-        if ("onReceivedError".equals(id)) {
-            Log.e(TAG, "onReceivedError");
-        }
-        else if ("onPageFinished".equals(id)) {
-            //webView.loadUrl("javascript:alert(window.cordova);");
+    /**
+     * Called when a message is sent to plugin.
+     *
+     * @param id            The message id
+     * @param data          The message data
+     * @return              Object or null
+     */
+    public Object onMessage(String id, Object data) {
+        LOG.d(TAG, "onMessage(" + id + "," + data + ")");
+        if ("onPageStarted".equals(id)) {
+            webLoading.setVisibility(View.VISIBLE);
+        } else if ("spinner".equals(id) && "stop".equals(data.toString())) {
+            webLoading.setVisibility(View.GONE);
+        } else if ("onReceivedError".equals(id)) {
+            //TODO
         }
         return null;
     }
@@ -174,5 +219,25 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
     public ExecutorService getThreadPool()
     {
         return threadPool;
+    }
+
+    /**
+     * Get string property for activity.
+     *
+     * @param name
+     * @param defaultValue
+     * @return the String value for the named property
+     */
+    protected String getStringProperty(String name, String defaultValue) {
+        Bundle bundle = this.getIntent().getExtras();
+        if (bundle == null) {
+            return defaultValue;
+        }
+        name = name.toLowerCase(Locale.getDefault());
+        String p = bundle.getString(name);
+        if (p == null) {
+            return defaultValue;
+        }
+        return p;
     }
 }
