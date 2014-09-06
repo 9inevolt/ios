@@ -2,6 +2,7 @@ package gg.destiny.app.chat;
 
 import gg.destiny.app.content.AppSearchRecentSuggestionProvider;
 import gg.destiny.app.fragments.PlayerFragment;
+import gg.destiny.app.model.Channel;
 import gg.destiny.app.preference.ChannelPreferenceChangeListener;
 import gg.destiny.app.util.NetworkListener;
 import gg.destiny.app.widget.FullMediaController.OnFullScreenListener;
@@ -143,7 +144,7 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
     }
 
     @Override
-    public void onChannelPreferenceChanged(String channel)
+    public void onChannelPreferenceChanged(Channel channel)
     {
         player = new PlayerFragment();
         player.setOnFullScreenListener(this);
@@ -171,7 +172,7 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
             String query = intent.getStringExtra(SearchManager.QUERY);
             if (query != null && !"".equals(query.trim())) {
-                App.getChannelPreferenceHelper().setPreferenceValue(query);
+                App.getChannelPreferenceHelper().setPreferenceValue(new Channel(query, query.toUpperCase()));
                 searchMenuItem.collapseActionView();
                 AppSearchRecentSuggestionProvider.getSuggestions(this).saveRecentQuery(query, null);
             }

@@ -2,6 +2,7 @@ package gg.destiny.app.fragments;
 
 import gg.destiny.app.chat.App;
 import gg.destiny.app.chat.R;
+import gg.destiny.app.model.Channel;
 import gg.destiny.app.parsers.extm3u.StreamInfo;
 import gg.destiny.app.preference.*;
 import gg.destiny.app.util.*;
@@ -37,10 +38,11 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
     public static final String TAG = "PlayerFragment";
     private static final long DIALOG_DELAY = 1000;
 
-    private String preferredChannel;
+    private Channel preferredChannel;
     private String preferredQuality;
     private PlayerView playerView = null;
     private ImageView offlineImageView = null;
+    private TextView offlineTextView = null;
     private OnFullScreenListener onFullScreenListener;
     private StreamWatcher watcher;
     private boolean isConnected;
@@ -75,6 +77,7 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
         super.onViewCreated(view, savedInstanceState);
         playerView = (PlayerView) view.findViewById(R.id.player_view);
         offlineImageView = (ImageView) view.findViewById(R.id.player_offline_image);
+        offlineTextView = (TextView) view.findViewById(R.id.player_offline_text);
         playerView.setOnFullScreenListener(onFullScreenListener);
         playerView.setOnSettingsListener(this);
         playerView.setOnCompletionListener(this);
@@ -207,6 +210,7 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
 
         playerView.setVisibility(View.VISIBLE);
         offlineImageView.setVisibility(View.GONE);
+        offlineTextView.setVisibility(View.GONE);
     }
 
     @Override
@@ -221,6 +225,7 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
 
         playerView.setVisibility(View.GONE);
         offlineImageView.setVisibility(View.VISIBLE);
+        offlineTextView.setVisibility(View.VISIBLE);
         Log.d(TAG, preferredChannel + " went offline");
     }
 
@@ -230,6 +235,12 @@ public class PlayerFragment extends Fragment implements OnTouchListener,
         Drawable d = new BitmapDrawable(getResources(), bm);
         offlineImageView.setImageDrawable(d);
         offlineImageView.setScaleType(ScaleType.CENTER_INSIDE);
+    }
+
+    @Override
+    public void channel(Channel channel)
+    {
+        getActivity().setTitle(channel.getDisplayName());
     }
 
     private void showDisconnectedToast()

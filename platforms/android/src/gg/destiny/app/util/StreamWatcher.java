@@ -5,7 +5,6 @@ import gg.destiny.app.model.Stream;
 import gg.destiny.app.parsers.extm3uParser;
 import gg.destiny.app.parsers.extm3u.*;
 
-import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.*;
@@ -25,7 +24,7 @@ public class StreamWatcher
     public static final String TAG = "StreamWatcher";
     private static final long STATUS_DELAY = 15000;
 
-    private final String channel;
+    private final Channel channel;
     private ScheduledExecutorService executor;
     private Status status = Status.UNKNOWN;
     private StreamEventHandler handler;
@@ -40,7 +39,7 @@ public class StreamWatcher
     private Runnable getChannelRunnable;
     private Future getChannelFuture;
 
-    public StreamWatcher(String watchChannel)
+    public StreamWatcher(Channel watchChannel)
     {
         channel = watchChannel;
         executor = Executors.newSingleThreadScheduledExecutor();
@@ -187,9 +186,13 @@ public class StreamWatcher
             {
                 Stream stream = null;
                 try {
-                    JSONObject obj = KrakenApi.getStream(channel);
+                    JSONObject obj = KrakenApi.getStream(channel.getName());
                     if (obj != null && obj.optJSONObject("stream") != null) {
-                        stream = new Stream(obj);
+                        stream = new Stream(obj.getJSONObject("stream"));
+                        Channel c = stream.getChannel();
+                        if (c != null) {
+                            handler.channel(c);
+                        }
                     }
                 } catch (Exception e) {
                     Log.e(TAG, "Kraken error", e);
@@ -215,7 +218,7 @@ public class StreamWatcher
             {
                 extm3u playlist = null;
                 try {
-                    String sPlaylist = KrakenApi.getPlaylist(channel);
+                    String sPlaylist = KrakenApi.getPlaylist(channel.getName());
                     Log.d(TAG, "playlist: " + sPlaylist);
                     playlist = extm3uParser.a(sPlaylist);
 
@@ -239,7 +242,7 @@ public class StreamWatcher
             {
                 Channel videoChannel = null;
                 try {
-                    JSONObject obj = KrakenApi.getChannel(channel);
+                    JSONObject obj = KrakenApi.getChannel(channel.getName());
                     if (obj != null) {
                         videoChannel = new Channel(obj);
                     }
@@ -250,6 +253,8 @@ public class StreamWatcher
                 if (videoChannel == null) {
                     return;
                 }
+
+                handler.channel(videoChannel);
 
                 if (videoChannel.getVideoBanner() == null) {
                     offlineImageLoaded = true;
@@ -289,6 +294,12 @@ public class StreamWatcher
 
         @Override
         public void offlineImage(Bitmap bm)
+        {
+            // no-op
+        }
+
+        @Override
+        public void channel(Channel channel)
         {
             // no-op
         }

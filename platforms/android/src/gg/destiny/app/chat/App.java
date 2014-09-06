@@ -1,12 +1,14 @@
 package gg.destiny.app.chat;
 
+import gg.destiny.app.model.Channel;
 import gg.destiny.app.preference.*;
 import gg.destiny.app.util.NetworkHelper;
 import android.app.Application;
 
 public final class App extends Application {
     private static final String CHANNEL_PREFERENCE = "preferred_channel";
-    private static final String CHANNEL_DEFAULT = "destiny";
+
+    private static final Channel CHANNEL_DEFAULT = new Channel("destiny", "Destiny");
 
     private static App instance;
 
@@ -21,8 +23,8 @@ public final class App extends Application {
         instance = this;
 
         qualityPreferenceHelper = new QualityPreferenceHelper(this);
-        channelPreferenceHelper = new ChannelPreferenceHelper(this, CHANNEL_PREFERENCE,
-                CHANNEL_DEFAULT);
+        channelPreferenceHelper = new ChannelPreferenceHelper(this,
+                CHANNEL_PREFERENCE, CHANNEL_DEFAULT);
         networkHelper = new NetworkHelper(this);
     }
 
