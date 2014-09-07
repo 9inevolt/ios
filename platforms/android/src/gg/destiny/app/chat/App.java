@@ -8,12 +8,13 @@ import android.app.Application;
 public final class App extends Application {
     private static final String CHANNEL_PREFERENCE = "preferred_channel";
 
-    private static final Channel CHANNEL_DEFAULT = new Channel("destiny", "Destiny");
+    public static final Channel CHANNEL_DEFAULT = new Channel("destiny", "Destiny");
 
     private static App instance;
 
     private QualityPreferenceHelper qualityPreferenceHelper;
     private ChannelPreferenceHelper channelPreferenceHelper;
+    private NotificationPreferenceHelper notificationPreferenceHelper;
     private NetworkHelper networkHelper;
 
     @Override
@@ -25,6 +26,7 @@ public final class App extends Application {
         qualityPreferenceHelper = new QualityPreferenceHelper(this);
         channelPreferenceHelper = new ChannelPreferenceHelper(this,
                 CHANNEL_PREFERENCE, CHANNEL_DEFAULT);
+        notificationPreferenceHelper = new NotificationPreferenceHelper(this);
         networkHelper = new NetworkHelper(this);
     }
 
@@ -36,6 +38,11 @@ public final class App extends Application {
     public static ChannelPreferenceHelper getChannelPreferenceHelper()
     {
         return instance.channelPreferenceHelper;
+    }
+
+    public static NotificationPreferenceHelper getNotificationPreferenceHelper()
+    {
+        return instance.notificationPreferenceHelper;
     }
 
     public static NetworkHelper getNetworkHelper()

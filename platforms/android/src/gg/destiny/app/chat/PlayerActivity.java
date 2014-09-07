@@ -3,7 +3,8 @@ package gg.destiny.app.chat;
 import gg.destiny.app.content.AppSearchRecentSuggestionProvider;
 import gg.destiny.app.fragments.PlayerFragment;
 import gg.destiny.app.model.Channel;
-import gg.destiny.app.preference.ChannelPreferenceChangeListener;
+import gg.destiny.app.preference.*;
+import gg.destiny.app.service.StreamWatcherService;
 import gg.destiny.app.util.NetworkListener;
 import gg.destiny.app.widget.FullMediaController.OnFullScreenListener;
 
@@ -26,7 +27,8 @@ import android.widget.SearchView;
 
 @TargetApi(14)
 public class PlayerActivity extends Activity implements CordovaInterface, OnFullScreenListener,
-        ChannelPreferenceChangeListener, NetworkListener
+        ChannelPreferenceChangeListener, NotificationPreferenceChangeListener,
+        NetworkListener
 {
     public static final String TAG = "PlayerActivity";
     private final ExecutorService threadPool = Executors.newCachedThreadPool();
@@ -34,7 +36,8 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
     private CordovaWebView webView;
     private View webOffline, webLoading;
     private PlayerFragment player;
-    private MenuItem searchMenuItem, collapsePlayerMenuItem;
+    private MenuItem searchMenuItem, collapsePlayerMenuItem,
+        enableNotificationsMenuItem;
 
     @Override
     protected void onCreate(Bundle bundle)
@@ -62,6 +65,15 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
         webView.loadUrl("file:///android_asset/www/chat-lite.html");
 
         App.getChannelPreferenceHelper().addListener(this);
+        App.getNotificationPreferenceHelper().addListener(this);
+
+        if (App.getNotificationPreferenceHelper().getPreferenceValue()) {
+            startStreamWatcherService();
+        }
+
+        if (getIntent() != null) {
+            handleIntent(getIntent());
+        }
     }
 
     @Override
@@ -94,6 +106,10 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
             collapsePlayerMenuItem.setTitle(R.string.collapse_player_title);
         }
 
+        enableNotificationsMenuItem = menu.findItem(R.id.menu_enable_notifications);
+        enableNotificationsMenuItem.setChecked(
+                App.getNotificationPreferenceHelper().getPreferenceValue());
+
         SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
         searchMenuItem = menu.findItem(R.id.menu_search);
         SearchView searchView = (SearchView) searchMenuItem.getActionView();
@@ -112,6 +128,11 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
             return true;
         } else if (item.getItemId() == R.id.menu_collapse_player) {
             collapsePlayer(!player.isHidden());
+            return true;
+        } else if (item.getItemId() == R.id.menu_enable_notifications) {
+            item.setChecked(!item.isChecked());
+            App.getNotificationPreferenceHelper().setPreferenceValue(
+                    item.isChecked());
             return true;
         }
 
@@ -164,6 +185,16 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
     }
 
     @Override
+    public void onNotificationPreferenceChanged(boolean enabled)
+    {
+        if (enabled) {
+            startStreamWatcherService();
+        } else {
+            stopStreamWatcherService();
+        }
+    }
+
+    @Override
     protected void onDestroy()
     {
         if (webView != null) {
@@ -172,21 +203,14 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
         }
 
         App.getChannelPreferenceHelper().removeListener(this);
+        App.getNotificationPreferenceHelper().removeListener(this);
 
         super.onDestroy();
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
-        setIntent(intent);
-        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
-            String query = intent.getStringExtra(SearchManager.QUERY);
-            if (query != null && !"".equals(query.trim())) {
-                App.getChannelPreferenceHelper().setPreferenceValue(new Channel(query, query.toUpperCase()));
-                searchMenuItem.collapseActionView();
-                AppSearchRecentSuggestionProvider.getSuggestions(this).saveRecentQuery(query, null);
-            }
-        }
+        handleIntent(intent);
     }
 
     @Override
@@ -265,5 +289,35 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
             collapsePlayerMenuItem.setTitle(R.string.collapse_player_title);
         }
         ft.commit();
+    }
+
+    private void startStreamWatcherService()
+    {
+        Intent intent = new Intent(this, StreamWatcherService.class);
+        intent.putExtra(StreamWatcherService.EXTRA_CHANNEL_NAME,
+                App.CHANNEL_DEFAULT.getDisplayName());
+        startService(intent);
+    }
+
+    private void stopStreamWatcherService()
+    {
+        Intent intent = new Intent(this, StreamWatcherService.class);
+        stopService(intent);
+    }
+
+    private void handleIntent(Intent intent)
+    {
+        setIntent(null);
+
+        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+            String query = intent.getStringExtra(SearchManager.QUERY);
+            if (query != null && !"".equals(query.trim())) {
+                App.getChannelPreferenceHelper().setPreferenceValue(new Channel(query, query));
+                if (searchMenuItem != null) {
+                    searchMenuItem.collapseActionView();
+                }
+                AppSearchRecentSuggestionProvider.getSuggestions(this).saveRecentQuery(query, null);
+            }
+        }
     }
 }

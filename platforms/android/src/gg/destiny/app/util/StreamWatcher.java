@@ -23,9 +23,11 @@ public class StreamWatcher
     }
     public static final String TAG = "StreamWatcher";
     private static final long STATUS_DELAY = 15000;
+    private static final long LONG_STATUS_DELAY = 5 * 60 * 1000;
 
     private final Channel channel;
     private ScheduledExecutorService executor;
+    private final boolean constantChecking;
     private Status status = Status.UNKNOWN;
     private StreamEventHandler handler;
     private extm3u masterPlaylist;
@@ -41,9 +43,15 @@ public class StreamWatcher
 
     public StreamWatcher(Channel watchChannel)
     {
+        this(watchChannel, false);
+    }
+
+    public StreamWatcher(Channel watchChannel, boolean onlyChecking)
+    {
         channel = watchChannel;
         executor = Executors.newSingleThreadScheduledExecutor();
         handler = new StreamEventHandler(new DummyListener());
+        constantChecking = onlyChecking;
         initStreamRunnable();
         initGetMasterPlaylistRunnable();
         initGetChannelRunnable();
@@ -118,7 +126,9 @@ public class StreamWatcher
     private void offline(boolean connected)
     {
         if (connected) {
-            executor.schedule(getStreamRunnable, STATUS_DELAY, TimeUnit.MILLISECONDS);
+            executor.schedule(getStreamRunnable,
+                    constantChecking ? LONG_STATUS_DELAY : STATUS_DELAY,
+                    TimeUnit.MILLISECONDS);
         }
 
         if (status == Status.OFFLINE) {
@@ -148,10 +158,20 @@ public class StreamWatcher
 
     private void tryOnline()
     {
-        if (status == Status.ONLINE)
+        if (status == Status.ONLINE && !constantChecking)
             return;
 
-        executor.submit(getMasterPlaylistRunnable);
+        if (constantChecking) {
+            if (status != Status.ONLINE) {
+                status = Status.ONLINE;
+                handler.online();
+            } else {
+                Log.d(TAG, channel + " still online");
+            }
+            executor.schedule(getStreamRunnable, LONG_STATUS_DELAY, TimeUnit.MILLISECONDS);
+        } else {
+            executor.submit(getMasterPlaylistRunnable);
+        }
     }
 
     private void setMasterPlaylist(extm3u playlist)

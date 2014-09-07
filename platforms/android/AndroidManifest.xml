@@ -40,5 +40,6 @@
         <provider android:name="gg.destiny.app.content.TwitchSearchSuggestionProvider"
                 android:authorities="gg.destiny.app.content.twitchsearchprovider"
                 android:exported="false" />
+        <service android:name="gg.destiny.app.service.StreamWatcherService" />
     </application>
 </manifest>

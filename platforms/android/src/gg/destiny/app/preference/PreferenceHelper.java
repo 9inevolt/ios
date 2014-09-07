@@ -75,6 +75,24 @@ public abstract class PreferenceHelper<T> implements OnSharedPreferenceChangeLis
         }
     }
 
+    protected boolean getPreferenceBoolean(boolean defaultValue)
+    {
+        return PreferenceManager.getDefaultSharedPreferences(sharedContext)
+            .getBoolean(preferenceName, defaultValue);
+    }
+
+    @TargetApi(9)
+    protected void setPreferenceBoolean(boolean value)
+    {
+        SharedPreferences.Editor editor = getSharedPreferences().edit()
+                .putBoolean(preferenceName, value);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+            editor.apply();
+        } else {
+            editor.commit();
+        }
+    }
+
     private SharedPreferences getSharedPreferences()
     {
         return PreferenceManager.getDefaultSharedPreferences(sharedContext);
