@@ -239,7 +239,7 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
      * @return              Object or null
      */
     public Object onMessage(String id, Object data) {
-        LOG.d(TAG, "onMessage(" + id + "," + data + ")");
+//        LOG.d(TAG, "onMessage(" + id + "," + data + ")");
         if ("onPageStarted".equals(id)) {
             webLoading.setVisibility(View.VISIBLE);
         } else if ("spinner".equals(id) && "stop".equals(data.toString())) {
