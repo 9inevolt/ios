@@ -61,7 +61,7 @@ public class StreamWatcherService extends Service implements StreamEventListener
         Notification n = build()
             .setContentTitle(name)
             .setContentText("is now live")
-            .setSmallIcon(R.drawable.defaulticon)
+            .setSmallIcon(R.drawable.ic_notification)
             .setAutoCancel(true)
             .setContentIntent(createPendingIntent())
             .build();
