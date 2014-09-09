@@ -19,10 +19,12 @@ import android.app.*;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.*;
+import android.widget.LinearLayout;
 import android.widget.SearchView;
 
 @TargetApi(14)
@@ -31,7 +33,9 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
         NetworkListener
 {
     public static final String TAG = "PlayerActivity";
+    private boolean wideLayout;
     private final ExecutorService threadPool = Executors.newCachedThreadPool();
+//    private LinearLayout playerLayoutContainer;
     private View webContainer;
     private CordovaWebView webView;
     private View webOffline, webLoading;
@@ -43,6 +47,12 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
     protected void onCreate(Bundle bundle)
     {
         super.onCreate(bundle);
+
+        wideLayout = getResources().getBoolean(R.bool.wide_layout);
+        boolean landscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+        if (wideLayout) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        }
 
         setContentView(R.layout.player);
 
@@ -57,11 +67,14 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
         player.setOnFullScreenListener(this);
 
         Config.init(this);
+//        playerLayoutContainer = (LinearLayout) findViewById(R.id.player_layout_container);
         webContainer = findViewById(R.id.web_container);
         webView = (CordovaWebView) findViewById(R.id.web_view);
         webOffline = findViewById(R.id.web_offline);
         webLoading = findViewById(R.id.web_loading);
         //webView.loadUrl(Config.getStartUrl());
+        // This will cause reload on rotation if we don't handle the configChanges
+        // But webview can't save display state properly
         webView.loadUrl("file:///android_asset/www/chat-lite.html");
 
         App.getChannelPreferenceHelper().addListener(this);
@@ -155,22 +168,10 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
     @Override
     public void onFullScreen(MediaPlayer mp, boolean full, boolean userInitiated)
     {
-        if (full) {
-            webContainer.setVisibility(View.GONE);
-            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
-            getActionBar().hide();
-            collapsePlayer(false);
-            if (userInitiated) {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-            }
+        if (wideLayout) {
+            onFullScreenWide(mp, full, userInitiated);
         } else {
-            webContainer.setVisibility(View.VISIBLE);
-            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-            getActionBar().show();
-            if (userInitiated) {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-            }
+            onFullScreenDefault(mp, full, userInitiated);
         }
     }
 
@@ -211,6 +212,44 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
     @Override
     protected void onNewIntent(Intent intent) {
         handleIntent(intent);
+    }
+
+    protected void onFullScreenWide(MediaPlayer mp, boolean full, boolean userInitiated)
+    {
+        if (full) {
+            collapsePlayer(false);
+            if (userInitiated) {
+                webContainer.setVisibility(View.GONE);
+                getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                        WindowManager.LayoutParams.FLAG_FULLSCREEN);
+                getActionBar().hide();
+            }
+        } else {
+            webContainer.setVisibility(View.VISIBLE);
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            getActionBar().show();
+        }
+    }
+
+    protected void onFullScreenDefault(MediaPlayer mp, boolean full, boolean userInitiated)
+    {
+        if (full) {
+            webContainer.setVisibility(View.GONE);
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            getActionBar().hide();
+            collapsePlayer(false);
+            if (userInitiated) {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            }
+        } else {
+            webContainer.setVisibility(View.VISIBLE);
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            getActionBar().show();
+            if (userInitiated) {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            }
+        }
     }
 
     @Override
@@ -307,8 +346,6 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
 
     private void handleIntent(Intent intent)
     {
-        setIntent(null);
-
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
             String query = intent.getStringExtra(SearchManager.QUERY);
             if (query != null && !"".equals(query.trim())) {
@@ -318,6 +355,9 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
                 }
                 AppSearchRecentSuggestionProvider.getSuggestions(this).saveRecentQuery(query, null);
             }
+
+            // Clear the search flag
+            setIntent(intent.setAction(null));
         }
     }
 }

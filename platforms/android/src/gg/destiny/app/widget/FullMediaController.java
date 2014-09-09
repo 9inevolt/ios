@@ -52,7 +52,7 @@ public class FullMediaController extends FrameLayout implements View.OnClickList
     public void setAnchorView(ViewGroup view) {
         mAnchor = view;
 
-        FrameLayout.LayoutParams frameParams = new FrameLayout.LayoutParams(
+        ViewGroup.LayoutParams frameParams = new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
         );
