@@ -46,8 +46,10 @@ public class StreamWatcherService extends Service implements StreamEventListener
         name = intent.getStringExtra(EXTRA_CHANNEL_NAME);
         displayName = intent.getStringExtra(EXTRA_CHANNEL_DISPLAY_NAME);
         Channel c = new Channel(name, displayName);
-        watcher = new StreamWatcher(c, true);
-        watcher.start(this);
+        if (watcher == null || !watcher.isRunning()) {
+            watcher = new StreamWatcher(c, true);
+            watcher.start(this);
+        }
         return Service.START_REDELIVER_INTENT;
     }
 

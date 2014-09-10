@@ -28,6 +28,7 @@ public class StreamWatcher
     private final Channel channel;
     private ScheduledExecutorService executor;
     private final boolean constantChecking;
+    private boolean running;
     private Status status = Status.UNKNOWN;
     private StreamEventHandler handler;
     private extm3u masterPlaylist;
@@ -75,6 +76,7 @@ public class StreamWatcher
         handler = h;
 
         executor = Executors.newSingleThreadScheduledExecutor();
+        running = true;
     }
 
     public void stop()
@@ -84,6 +86,12 @@ public class StreamWatcher
         }
 
         handler.clear();
+        running = false;
+    }
+
+    public boolean isRunning()
+    {
+        return running;
     }
 
     public List<String> getQualities()
