@@ -234,9 +234,9 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
         int orientation = landscape ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL;
 
         if (landscape) {
-            lpp = new LinearLayout.LayoutParams(0, MATCH_PARENT, 1);
+            lpp = new LinearLayout.LayoutParams(0, MATCH_PARENT, 7);
             int width = getResources().getDimensionPixelSize(R.dimen.web_container_width);
-            lpw = new LinearLayout.LayoutParams(width, MATCH_PARENT, 0);
+            lpw = new LinearLayout.LayoutParams(width, MATCH_PARENT, 1);
         } else {
             lpp = new LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT, 0);
             lpw = new LinearLayout.LayoutParams(MATCH_PARENT, 0, 1);

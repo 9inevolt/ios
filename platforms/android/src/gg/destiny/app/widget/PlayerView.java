@@ -1,5 +1,6 @@
 package gg.destiny.app.widget;
 
+import gg.destiny.app.chat.R;
 import gg.destiny.app.widget.FullMediaController.OnFullScreenListener;
 import gg.destiny.app.widget.FullMediaController.OnSettingsListener;
 
@@ -35,6 +36,7 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
     private SurfaceHolder holder = null;
     private Uri playUri = null;
     private boolean fullScreen, userFullScreen;
+    private boolean wideLayout;
     private OnErrorListener onErrorListener;
     private OnCompletionListener onCompletionListener;
     private OnFullScreenListener onFullScreenListener;
@@ -306,7 +308,7 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
         int heightSpecMode = MeasureSpec.getMode(heightMeasureSpec);
         int heightSpecSize = MeasureSpec.getSize(heightMeasureSpec);
 
-        if (isFullScreen()) {
+        if (isFullScreen() && (!wideLayout || userFullScreen)) {
             // stretch in full screen mode
             height = heightSpecSize;
             width = widthSpecSize;
@@ -374,6 +376,7 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
         requestFocus();
         setState(State.IDLE);
         targetState = State.IDLE;
+        wideLayout = getResources().getBoolean(R.bool.wide_layout);
     }
 
     protected void setState(State newState)
