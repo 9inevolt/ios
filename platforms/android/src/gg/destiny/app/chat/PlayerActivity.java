@@ -24,8 +24,10 @@ import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.*;
+import static android.view.ViewGroup.LayoutParams.*;
 import android.widget.LinearLayout;
 import android.widget.SearchView;
+import android.widget.LinearLayout.LayoutParams;
 
 @TargetApi(14)
 public class PlayerActivity extends Activity implements CordovaInterface, OnFullScreenListener,
@@ -35,8 +37,8 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
     public static final String TAG = "PlayerActivity";
     private boolean wideLayout;
     private final ExecutorService threadPool = Executors.newCachedThreadPool();
-//    private LinearLayout playerLayoutContainer;
-    private View webContainer;
+    private LinearLayout playerLayoutContainer;
+    private View playerContainer, webContainer;
     private CordovaWebView webView;
     private View webOffline, webLoading;
     private PlayerFragment player;
@@ -49,10 +51,6 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
         super.onCreate(bundle);
 
         wideLayout = getResources().getBoolean(R.bool.wide_layout);
-        boolean landscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
-        if (wideLayout) {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        }
 
         setContentView(R.layout.player);
 
@@ -67,7 +65,8 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
         player.setOnFullScreenListener(this);
 
         Config.init(this);
-//        playerLayoutContainer = (LinearLayout) findViewById(R.id.player_layout_container);
+        playerLayoutContainer = (LinearLayout) findViewById(R.id.player_layout_container);
+        playerContainer = findViewById(R.id.player_container);
         webContainer = findViewById(R.id.web_container);
         webView = (CordovaWebView) findViewById(R.id.web_view);
         webOffline = findViewById(R.id.web_offline);
@@ -229,6 +228,23 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
             getActionBar().show();
         }
+
+        LinearLayout.LayoutParams lpp, lpw;
+        boolean landscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+        int orientation = landscape ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL;
+
+        if (landscape) {
+            lpp = new LinearLayout.LayoutParams(0, MATCH_PARENT, 1);
+            int width = getResources().getDimensionPixelSize(R.dimen.web_container_width);
+            lpw = new LinearLayout.LayoutParams(width, MATCH_PARENT, 0);
+        } else {
+            lpp = new LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT, 0);
+            lpw = new LinearLayout.LayoutParams(MATCH_PARENT, 0, 1);
+        }
+
+        playerContainer.setLayoutParams(lpp);
+        webContainer.setLayoutParams(lpw);
+        playerLayoutContainer.setOrientation(orientation);
     }
 
     protected void onFullScreenDefault(MediaPlayer mp, boolean full, boolean userInitiated)
