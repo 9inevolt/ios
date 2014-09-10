@@ -29,6 +29,7 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
     private int mVideoWidth;
     private int mVideoHeight;
     private State state, targetState;
+    private boolean isPlayback;
     private MediaPlayer player = null;
     private FullMediaController controls = null;
     private SurfaceHolder holder = null;
@@ -110,11 +111,7 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
     @Override
     public boolean isInPlaybackState()
     {
-        return player != null &&
-            state != State.ERROR &&
-            state != State.RESETTING &&
-            state != State.IDLE &&
-            state != State.PREPARING;
+        return isPlayback;
     }
 
     @Override
@@ -136,7 +133,7 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
     {
         if (isInPlaybackState()) {
             player.start();
-            state = State.PLAYING;
+            setState(State.PLAYING);
         }
 
         targetState = State.PLAYING;
@@ -147,7 +144,7 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
     {
         if (isPlaying()) {
             player.pause();
-            state = State.PAUSED;
+            setState(State.PAUSED);
         }
 
         targetState = State.PAUSED;
@@ -361,15 +358,42 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
         setMeasuredDimension(width, height);
     }
 
-    private void initVideoView() {
+    protected void onPlaybackStateChanged(boolean playbackState)
+    {
+        // Trigger orientation detection since playback state has changed
+        onConfigurationChanged(getResources().getConfiguration());
+    }
+
+    private void initVideoView()
+    {
         mVideoWidth = 16;
         mVideoHeight = 9;
         getHolder().addCallback(callback);
         setFocusable(true);
         setFocusableInTouchMode(true);
         requestFocus();
-        state = State.IDLE;
+        setState(State.IDLE);
         targetState = State.IDLE;
+    }
+
+    protected void setState(State newState)
+    {
+        state = newState;
+        checkPlayback();
+    }
+
+    protected void checkPlayback()
+    {
+        boolean newPlayback = player != null &&
+            state != State.ERROR &&
+            state != State.RESETTING &&
+            state != State.IDLE &&
+            state != State.PREPARING;
+
+        if (isPlayback != newPlayback) {
+            isPlayback = newPlayback;
+            onPlaybackStateChanged(isPlayback);
+        }
     }
 
     private void initControls()
@@ -408,18 +432,18 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
         }
 
         if (player != null) {
-            state = State.RESETTING;
+            setState(State.RESETTING);
             player.reset();
             player.release();
             player = null;
         }
 
-        state = State.IDLE;
+        setState(State.IDLE);
     }
 
     private void releasePlayerAsync(final boolean clearTarget, final Uri playUri)
     {
-        state = State.RESETTING;
+        setState(State.RESETTING);
 
         if (clearTarget) {
             targetState = State.IDLE;
@@ -454,7 +478,7 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
                         Log.d(TAG, "prepareAsync()");
                         player.prepareAsync();
 
-                        state = State.PREPARING;
+                        setState(State.PREPARING);
                     }
                 });
             }
@@ -467,7 +491,7 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
             player.release();
             player = null;
         }
-        state = State.IDLE;
+        setState(State.IDLE);
     }
 
     private void play(String url) throws IOException
@@ -521,10 +545,10 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
             long prepareTime = System.currentTimeMillis() - prePrepare;
             Log.d(TAG, "Prepare time elapsed: " + prepareTime + "ms");
 
-            state = State.PREPARED;
+            setState(State.PREPARED);
             if (targetState == State.PLAYING) {
                 player.start();
-                state = State.PLAYING;
+                setState(State.PLAYING);
                 if (controls != null)
                     controls.show();
             } else if (!isPlaying()) {
@@ -552,7 +576,7 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
             }
 
             if (handled) {
-                state = State.ERROR;
+                setState(State.ERROR);
                 if (controls != null)
                     controls.show(0);
             }
@@ -590,7 +614,7 @@ public class PlayerView extends SurfaceView implements FullMediaPlayerControl
                 return;
             }
 
-            state = State.COMPLETE;
+            setState(State.COMPLETE);
             targetState = State.COMPLETE;
             if (controls != null) {
                 controls.hide();

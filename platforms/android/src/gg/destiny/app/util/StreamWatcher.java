@@ -185,7 +185,7 @@ public class StreamWatcher
         qualityMap.clear();
 
         for (Media m : playlist.media) {
-            qualityMap.put(m.name.toLowerCase(), m.streams.get(0));
+            qualityMap.put(m.name.toLowerCase(Locale.ENGLISH), m.streams.get(0));
         }
 
         for (StreamInfo s : playlist.streams) {

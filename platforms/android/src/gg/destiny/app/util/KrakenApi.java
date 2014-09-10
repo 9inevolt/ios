@@ -3,6 +3,7 @@ package gg.destiny.app.util;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Locale;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -90,7 +91,8 @@ public final class KrakenApi
 
         String url = String.format(
                 "http://usher.twitch.tv/select/%s.json?nauthsig=%s&nauth=%s&allow_source=true&allow_audio_only=true",
-                Uri.encode(channel), Uri.encode(token.sig), Uri.encode(token.token));
+                Uri.encode(channel).toLowerCase(Locale.ENGLISH),
+                Uri.encode(token.sig), Uri.encode(token.token));
 
         Log.d("KrakenApi", "Usher url: " + url);
 
@@ -106,7 +108,8 @@ public final class KrakenApi
 
         String url = String.format(
                 "http://usher.twitch.tv/api/channel/hls/%s.m3u8?sig=%s&token=%s&allow_source=true&allow_audio_only=true",
-                Uri.encode(channel), Uri.encode(token.sig), Uri.encode(token.token));
+                Uri.encode(channel).toLowerCase(Locale.ENGLISH),
+                Uri.encode(token.sig), Uri.encode(token.token));
 
         return getString(url);
     }

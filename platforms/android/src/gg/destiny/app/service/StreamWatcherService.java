@@ -9,7 +9,7 @@ import android.app.*;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.os.*;
+import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
@@ -17,10 +17,12 @@ public class StreamWatcherService extends Service implements StreamEventListener
 {
     public static final String TAG = "StreamWatcherService";
     public static final String EXTRA_CHANNEL_NAME = "gg.destiny.intent.channel.NAME";
+    public static final String EXTRA_CHANNEL_DISPLAY_NAME = "gg.destiny.intent.channel.DISPLAY_NAME";
     private static final int NOTIFICATION_ONLINE = 1;
 
     private StreamWatcher watcher;
     private String name;
+    private String displayName;
 
     @Override
     public void onCreate()
@@ -42,7 +44,8 @@ public class StreamWatcherService extends Service implements StreamEventListener
     public int onStartCommand(Intent intent, int flags, int startId)
     {
         name = intent.getStringExtra(EXTRA_CHANNEL_NAME);
-        Channel c = new Channel(name.toLowerCase(), name);
+        displayName = intent.getStringExtra(EXTRA_CHANNEL_DISPLAY_NAME);
+        Channel c = new Channel(name, displayName);
         watcher = new StreamWatcher(c, true);
         watcher.start(this);
         return Service.START_REDELIVER_INTENT;
@@ -59,7 +62,7 @@ public class StreamWatcherService extends Service implements StreamEventListener
     public void online()
     {
         Notification n = build()
-            .setContentTitle(name)
+            .setContentTitle(displayName)
             .setContentText("is now live")
             .setSmallIcon(R.drawable.ic_notification)
             .setAutoCancel(true)

@@ -334,6 +334,8 @@ public class PlayerActivity extends Activity implements CordovaInterface, OnFull
     {
         Intent intent = new Intent(this, StreamWatcherService.class);
         intent.putExtra(StreamWatcherService.EXTRA_CHANNEL_NAME,
+                App.CHANNEL_DEFAULT.getName());
+        intent.putExtra(StreamWatcherService.EXTRA_CHANNEL_DISPLAY_NAME,
                 App.CHANNEL_DEFAULT.getDisplayName());
         startService(intent);
     }
