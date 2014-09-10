@@ -5,7 +5,8 @@
     
     <FrameLayout android:id="@+id/media_controls"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:padding="8dp">
 
         <ImageButton android:id="@+id/play_pause_button"
             android:layout_width="wrap_content"
