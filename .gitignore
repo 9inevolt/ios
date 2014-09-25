@@ -12,3 +12,9 @@ gen/
 out/
 proguard_logs/
 .staging/
+
+*.pbxuser
+*.mode1v3
+*.perspectivev3
+build/
+xcuserdata
