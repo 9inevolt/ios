@@ -26,6 +26,16 @@
 //
 
 #import "MainViewController.h"
+#import "DGGKrakenApi.h"
+
+@interface MainViewController ()
+
+@property (weak, nonatomic) IBOutlet UIView *playerView;
+@property (nonatomic, readwrite) MPMoviePlayerController *player;
+
+@end
+
+static NSString *const CHANNEL = @"virlomi";
 
 @implementation MainViewController
 
@@ -80,6 +90,26 @@
 {
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
+    [DGGKrakenApi getChannelAccessToken:CHANNEL completion:^(NSDictionary *token) {
+        NSURL *url = [DGGKrakenApi getPlaylistURL:CHANNEL token:token];
+//        NSLog(@"Playlist received: %@", playlist);
+//        NSURL *url = [NSURL URLWithString:@"https://devimages.apple.com.edgekey.net/streaming/examples/bipbop_16x9/bipbop_16x9_variant.m3u8"];
+//        NSURL *url = [NSURL URLWithString:@"http://devimages.apple.com/iphone/samples/bipbop/bipbopall.m3u8"];
+        self.player = [[MPMoviePlayerController alloc] initWithContentURL:url];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(moviePlaybackDidFinish:)
+                                                     name:MPMoviePlayerPlaybackDidFinishNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(movieLoadStateDidChange:)
+                                                     name:MPMoviePlayerLoadStateDidChangeNotification
+                                                   object:nil];
+        [self.player setMovieSourceType:MPMovieSourceTypeStreaming];
+        [self.player prepareToPlay];
+        [self.player.view setFrame:self.playerView.bounds];
+        [self.playerView addSubview:self.player.view];
+        [self.player play];
+    }];
 }
 
 - (void)viewDidUnload
@@ -98,6 +128,16 @@
 - (BOOL)prefersStatusBarHidden
 {
     return YES;
+}
+
+- (void)movieLoadStateDidChange:(NSNotification *)notification
+{
+    NSLog(@"Load state changed: %ld", self.player.loadState);
+}
+
+- (void)moviePlaybackDidFinish:(NSNotification *)notification
+{
+    NSLog(@"Playback finished: %@", notification.userInfo);
 }
 
 /* Comment out the block below to over-ride */

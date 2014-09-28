@@ -17,7 +17,15 @@
                         <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Offline" translatesAutoresizingMaskIntoConstraints="NO" id="ez9-rv-xfD">
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="qkL-xU-wi1" userLabel="Player View">
+                                <rect key="frame" x="0.0" y="20" width="320" height="180"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" secondItem="qkL-xU-wi1" secondAttribute="height" multiplier="16:9" id="x4P-Tb-mbP"/>
+                                </constraints>
+                            </view>
+                            <imageView hidden="YES" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Offline" translatesAutoresizingMaskIntoConstraints="NO" id="ez9-rv-xfD">
                                 <rect key="frame" x="0.0" y="20" width="320" height="180"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <constraints>
@@ -32,17 +40,21 @@
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>
+                            <constraint firstItem="qkL-xU-wi1" firstAttribute="top" secondItem="WDs-5T-Ykk" secondAttribute="bottom" id="3oH-hm-woq"/>
+                            <constraint firstAttribute="width" secondItem="qkL-xU-wi1" secondAttribute="width" id="7tI-Tc-X1f"/>
                             <constraint firstItem="yrU-kY-Ztl" firstAttribute="width" secondItem="BrG-5s-s3h" secondAttribute="width" id="Gmv-DE-UiW"/>
                             <constraint firstItem="XVy-S0-78d" firstAttribute="top" secondItem="yrU-kY-Ztl" secondAttribute="bottom" id="Hfz-AU-aS7"/>
+                            <constraint firstItem="yrU-kY-Ztl" firstAttribute="top" secondItem="qkL-xU-wi1" secondAttribute="bottom" id="JVA-cA-Bxj"/>
+                            <constraint firstItem="qkL-xU-wi1" firstAttribute="leading" secondItem="BrG-5s-s3h" secondAttribute="leading" id="KW3-pf-wgM"/>
                             <constraint firstItem="ez9-rv-xfD" firstAttribute="width" secondItem="BrG-5s-s3h" secondAttribute="width" id="MV3-GV-sQn"/>
                             <constraint firstItem="ez9-rv-xfD" firstAttribute="leading" secondItem="BrG-5s-s3h" secondAttribute="leading" id="n2w-sj-q9O"/>
-                            <constraint firstItem="yrU-kY-Ztl" firstAttribute="top" secondItem="ez9-rv-xfD" secondAttribute="bottom" id="oEY-Xs-SX3"/>
                             <constraint firstItem="ez9-rv-xfD" firstAttribute="top" secondItem="WDs-5T-Ykk" secondAttribute="bottom" id="t3M-cH-dzN"/>
                             <constraint firstItem="yrU-kY-Ztl" firstAttribute="leading" secondItem="BrG-5s-s3h" secondAttribute="leading" id="xUM-J6-dXk"/>
                         </constraints>
                     </view>
                     <extendedEdge key="edgesForExtendedLayout" bottom="YES"/>
                     <connections>
+                        <outlet property="playerView" destination="qkL-xU-wi1" id="Jdx-ON-2TO"/>
                         <outlet property="webView" destination="yrU-kY-Ztl" id="3cK-W6-JTd"/>
                     </connections>
                 </viewController>
