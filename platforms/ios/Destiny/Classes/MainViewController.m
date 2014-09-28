@@ -95,6 +95,11 @@
     return [super shouldAutorotateToInterfaceOrientation:interfaceOrientation];
 }
 
+- (BOOL)prefersStatusBarHidden
+{
+    return YES;
+}
+
 /* Comment out the block below to over-ride */
 
 /*

@@ -1,1 +1,39 @@
-{"prepare_queue":{"installed":[],"uninstalled":[]},"config_munge":{"framework":{"CoreGraphics.framework":{"false":1}},"config.xml":{"/*":{"<feature name=\"InAppBrowser\"><param name=\"ios-package\" value=\"CDVInAppBrowser\" /></feature>":1}}},"installed_plugins":{"org.apache.cordova.inappbrowser":{"PACKAGE_NAME":"gg.destiny.app.chat"},"com.ququplay.websocket.WebSocket":{"PACKAGE_NAME":"gg.destiny.app.chat"}},"dependent_plugins":{}}
+{
+    "prepare_queue": {
+        "installed": [],
+        "uninstalled": []
+    },
+    "config_munge": {
+        "files": {
+            "framework": {
+                "parents": {
+                    "CoreGraphics.framework": [
+                        {
+                            "xml": "false",
+                            "count": 1
+                        }
+                    ]
+                }
+            },
+            "config.xml": {
+                "parents": {
+                    "/*": [
+                        {
+                            "xml": "<feature name=\"InAppBrowser\"><param name=\"ios-package\" value=\"CDVInAppBrowser\" /></feature>",
+                            "count": 1
+                        }
+                    ]
+                }
+            }
+        }
+    },
+    "installed_plugins": {
+        "com.ququplay.websocket.WebSocket": {
+            "PACKAGE_NAME": "gg.destiny.app.chat"
+        },
+        "org.apache.cordova.inappbrowser": {
+            "PACKAGE_NAME": "gg.destiny.app.chat"
+        }
+    },
+    "dependent_plugins": {}
+}

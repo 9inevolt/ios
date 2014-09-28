@@ -26,26 +26,17 @@
     <meta name="viewport" content="width=device-width,height=device-height,user-scalable=no,maximum-scale=1.0,initial-scale=1.0" />
     <meta http-equiv="Content-type" content="text/html; charset=utf-8"> <!-- ISO-8859-1 -->
     <title>Cordova Mobile Spec</title>
-    <link rel="stylesheet" href="../master.css" type="text/css" media="screen" title="no title" charset="utf-8">
-    <script type="text/javascript" charset="utf-8" src="../cordova-incl.js"></script>
+
   </head>
-  <body id="stage" class="theme">
-    <h1>InAppBrowser - Local URL</h1>
-    <div id="info">
-        You have successfully loaded a local URL
-      </div>
-      <div>User-Agent = <span id="u-a"></span></div>
-      <div><a href="http://www.google.com">Visit Google</a></div>
-      <div><a href="http://www.yahoo.com">Visit Yahoo</a></div>
-      <div><a href="http://www.stluciadance.com/prospectus_file/sample.pdf">Check out my remote PDF</a></div>
-      <div><a href="local.pdf">Check out my local PDF</a></div>
-    <h2> </h2><div class="backBtn" onclick="backHome();">Back</div>
+  <body>
+    <video width=100% height=100% id="player">
+      <source src="http://m.comptoir-info.com/app/beta/sample.mp4">
+      <meta property="og:video:secure_url" content="http://m.comptoir-info.com/app/beta/sample.mp4">
+      <meta property="og:video:type" content="video/mp4">
+    </video>
+    <div>
+      <button onclick="document.getElementById('player').play()"> play </button>
+      <button onclick="document.getElementById('player').pause()"> pause </button>
+    </div>
   </body>
-  <script>
-      function updateUserAgent() {
-          document.getElementById("u-a").textContent = navigator.userAgent;
-      }
-      updateUserAgent();
-      window.setInterval(updateUserAgent, 1500);
-  </script>
 </html>

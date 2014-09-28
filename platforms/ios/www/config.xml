@@ -7,12 +7,12 @@
 
     <access origin="http://127.0.0.1*" />
     <access origin="*://*.destiny.gg/*" subdomains="true" />
-    <!-- <access origin="*" /> -->
+    <access origin="*" />
 
     <!-- weinre debugger -->
     <!-- <access origin="10.0.3.2:*" /> -->
 
-    <content src="http://www.destiny.gg/embed/chat" />
+    <content src="chat-lite.html" />
 
     <feature name="http://api.phonegap.com/1.0/device" />
     <preference name="permissions" value="none" />
