@@ -28,11 +28,11 @@
 #import <Cordova/CDVViewController.h>
 #import <Cordova/CDVCommandDelegateImpl.h>
 #import <Cordova/CDVCommandQueue.h>
-#import <MediaPlayer/MediaPlayer.h>
+#import <ALMoviePlayerController/ALMoviePlayerController.h>
 
-@interface MainViewController : CDVViewController
+@interface MainViewController : CDVViewController <ALMoviePlayerControllerDelegate>
 
-@property (nonatomic, readonly) MPMoviePlayerController *player;
+@property (nonatomic, readonly) ALMoviePlayerController *player;
 
 @end
 

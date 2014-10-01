@@ -31,11 +31,11 @@
 @interface MainViewController ()
 
 @property (weak, nonatomic) IBOutlet UIView *playerView;
-@property (nonatomic, readwrite) MPMoviePlayerController *player;
+@property (nonatomic, readwrite) ALMoviePlayerController *player;
 
 @end
 
-static NSString *const CHANNEL = @"virlomi";
+static NSString *const CHANNEL = @"destiny";
 
 @implementation MainViewController
 
@@ -95,7 +95,11 @@ static NSString *const CHANNEL = @"virlomi";
 //        NSLog(@"Playlist received: %@", playlist);
 //        NSURL *url = [NSURL URLWithString:@"https://devimages.apple.com.edgekey.net/streaming/examples/bipbop_16x9/bipbop_16x9_variant.m3u8"];
 //        NSURL *url = [NSURL URLWithString:@"http://devimages.apple.com/iphone/samples/bipbop/bipbopall.m3u8"];
-        self.player = [[MPMoviePlayerController alloc] initWithContentURL:url];
+        self.player = [[ALMoviePlayerController alloc] initWithFrame:self.playerView.bounds];
+        self.player.delegate = self;
+        ALMoviePlayerControls *movieControls = [[ALMoviePlayerControls alloc] initWithMoviePlayer:self.player style:ALMoviePlayerControlsStyleDefault];
+        [self.player setControls:movieControls];
+
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(moviePlaybackDidFinish:)
                                                      name:MPMoviePlayerPlaybackDidFinishNotification
@@ -104,11 +108,11 @@ static NSString *const CHANNEL = @"virlomi";
                                                  selector:@selector(movieLoadStateDidChange:)
                                                      name:MPMoviePlayerLoadStateDidChangeNotification
                                                    object:nil];
+        [self.playerView addSubview:self.player.view];
+        [self.player setContentURL:url];
         [self.player setMovieSourceType:MPMovieSourceTypeStreaming];
         [self.player prepareToPlay];
-        [self.player.view setFrame:self.playerView.bounds];
-        [self.playerView addSubview:self.player.view];
-        [self.player play];
+//        [self.player play];
     }];
 }
 
@@ -132,12 +136,33 @@ static NSString *const CHANNEL = @"virlomi";
 
 - (void)movieLoadStateDidChange:(NSNotification *)notification
 {
-    NSLog(@"Load state changed: %ld", self.player.loadState);
+    NSLog(@"Load state changed: %ld", (long)self.player.loadState);
+    if (self.player.loadState == MPMovieLoadStatePlayable)
+    {
+        [self.player play];
+    }
 }
 
 - (void)moviePlaybackDidFinish:(NSNotification *)notification
 {
     NSLog(@"Playback finished: %@", notification.userInfo);
+}
+
+#pragma mark ALMoviePlayerControllerDelegate
+
+- (void)movieTimedOut
+{
+    NSLog(@"Movie timed out");
+}
+
+- (void)moviePlayerWillMoveFromWindow
+{
+    if (![self.playerView.subviews containsObject:self.player.view])
+    {
+        [self.playerView addSubview:self.player.view];
+    }
+    
+    [self.player setFrame:self.playerView.bounds];
 }
 
 /* Comment out the block below to over-ride */

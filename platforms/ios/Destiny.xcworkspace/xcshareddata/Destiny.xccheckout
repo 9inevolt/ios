@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>B1B38898-0B07-49D9-86E1-B09432E30382</string>
+	<key>IDESourceControlProjectName</key>
+	<string>Destiny</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>02BF6161-8341-413A-B0C0-5BC17A6E34C0</key>
+		<string>github9:destinygg/android</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>platforms/ios/Destiny.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>02BF6161-8341-413A-B0C0-5BC17A6E34C0</key>
+		<string>../../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>github9:destinygg/android</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>02BF6161-8341-413A-B0C0-5BC17A6E34C0</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>02BF6161-8341-413A-B0C0-5BC17A6E34C0</string>
+			<key>IDESourceControlWCCName</key>
+			<string>android</string>
+		</dict>
+	</array>
+</dict>
+</plist>
