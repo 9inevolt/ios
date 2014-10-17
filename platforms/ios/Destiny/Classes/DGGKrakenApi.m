@@ -14,6 +14,32 @@ static NSURLSessionConfiguration *sharedSession;
     sharedSession = [NSURLSessionConfiguration defaultSessionConfiguration];
 }
 
++ (void)getChannel:(NSString *)channel completion:(void (^)(NSDictionary *))completion
+{
+    NSString *urlChannel = [channel stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
+    NSString *url = [NSString stringWithFormat:@"http://api.twitch.tv/kraken/channels/%@", urlChannel];
+    [[[NSURLSession sharedSession] dataTaskWithURL:[NSURL URLWithString:url]
+                                 completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+                                     NSDictionary *tokenData = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+                                     if (tokenData) {
+                                         completion(tokenData);
+                                     }
+                                 }] resume];
+}
+
++ (void)getStream:(NSString *)channel completion:(void (^)(NSDictionary *))completion
+{
+    NSString *urlChannel = [channel stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
+    NSString *url = [NSString stringWithFormat:@"http://api.twitch.tv/kraken/streams/%@", urlChannel];
+    [[[NSURLSession sharedSession] dataTaskWithURL:[NSURL URLWithString:url]
+                                 completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+                                     NSDictionary *tokenData = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+                                     if (tokenData) {
+                                         completion(tokenData);
+                                     }
+                                 }] resume];
+}
+
 + (void)getChannelAccessToken:(NSString *)channel completion:(void (^)(NSDictionary*))completion
 {
     NSString *urlChannel = [channel stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];

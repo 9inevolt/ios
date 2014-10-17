@@ -43,6 +43,9 @@
 		D067C89C19DBE487008DF55F /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 305D5FD0115AB8F900A74A75 /* MobileCoreServices.framework */; };
 		D06AB73919D8EB340023622B /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5AEE5B34173C68D80009041E /* CoreLocation.framework */; };
 		D06AB73A19D8EB760023622B /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 288765FC0DF74451002DB57D /* CoreGraphics.framework */; };
+		D0CAF81D19E64F0000CFD78C /* DGGStreamWatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = D0CAF81C19E64F0000CFD78C /* DGGStreamWatcher.m */; };
+		D0CAF82019E6788700CFD78C /* DGGChannel.m in Sources */ = {isa = PBXBuildFile; fileRef = D0CAF81F19E6788700CFD78C /* DGGChannel.m */; };
+		D0CAF82319E67E3C00CFD78C /* DGGStream.m in Sources */ = {isa = PBXBuildFile; fileRef = D0CAF82219E67E3C00CFD78C /* DGGStream.m */; };
 		D4A0D8761607E02300AEF8BB /* Default-568h@2x~iphone.png in Resources */ = {isa = PBXBuildFile; fileRef = D4A0D8751607E02300AEF8BB /* Default-568h@2x~iphone.png */; };
 		F840E1F1165FE0F500CFE078 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = F840E1F0165FE0F500CFE078 /* config.xml */; };
 /* End PBXBuildFile section */
@@ -113,6 +116,12 @@
 		D03B249219D7DB3D00947FF1 /* MediaPlayer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MediaPlayer.framework; path = System/Library/Frameworks/MediaPlayer.framework; sourceTree = SDKROOT; };
 		D059DC0F19D396C000810E64 /* Storyboard.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = Storyboard.storyboard; sourceTree = "<group>"; };
 		D05BA1C619D636AF00097BCE /* Media.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Media.xcassets; sourceTree = "<group>"; };
+		D0CAF81B19E64F0000CFD78C /* DGGStreamWatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DGGStreamWatcher.h; sourceTree = "<group>"; };
+		D0CAF81C19E64F0000CFD78C /* DGGStreamWatcher.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DGGStreamWatcher.m; sourceTree = "<group>"; };
+		D0CAF81E19E6788700CFD78C /* DGGChannel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DGGChannel.h; sourceTree = "<group>"; };
+		D0CAF81F19E6788700CFD78C /* DGGChannel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DGGChannel.m; sourceTree = "<group>"; };
+		D0CAF82119E67E3C00CFD78C /* DGGStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DGGStream.h; sourceTree = "<group>"; };
+		D0CAF82219E67E3C00CFD78C /* DGGStream.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DGGStream.m; sourceTree = "<group>"; };
 		D4A0D8751607E02300AEF8BB /* Default-568h@2x~iphone.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x~iphone.png"; sourceTree = "<group>"; };
 		F840E1F0165FE0F500CFE078 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = config.xml; path = Destiny/config.xml; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -138,6 +147,7 @@
 		080E96DDFE201D6D7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				D0CAF81A19E64CA000CFD78C /* Model */,
 				D03B248E19D7C00100947FF1 /* Utility */,
 				302D95EE14D2391D003F00A1 /* MainViewController.h */,
 				302D95EF14D2391D003F00A1 /* MainViewController.m */,
@@ -312,8 +322,21 @@
 			children = (
 				D03B248F19D7C08000947FF1 /* DGGKrakenApi.h */,
 				D03B249019D7C08000947FF1 /* DGGKrakenApi.m */,
+				D0CAF81B19E64F0000CFD78C /* DGGStreamWatcher.h */,
+				D0CAF81C19E64F0000CFD78C /* DGGStreamWatcher.m */,
 			);
 			name = Utility;
+			sourceTree = "<group>";
+		};
+		D0CAF81A19E64CA000CFD78C /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				D0CAF81E19E6788700CFD78C /* DGGChannel.h */,
+				D0CAF81F19E6788700CFD78C /* DGGChannel.m */,
+				D0CAF82119E67E3C00CFD78C /* DGGStream.h */,
+				D0CAF82219E67E3C00CFD78C /* DGGStream.m */,
+			);
+			name = Model;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -475,11 +498,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D0CAF82019E6788700CFD78C /* DGGChannel.m in Sources */,
 				1D60589B0D05DD56006BFB54 /* main.m in Sources */,
 				D03B249119D7C08000947FF1 /* DGGKrakenApi.m in Sources */,
 				1D3623260D0F684500981E51 /* AppDelegate.m in Sources */,
+				D0CAF82319E67E3C00CFD78C /* DGGStream.m in Sources */,
 				302D95F114D2391D003F00A1 /* MainViewController.m in Sources */,
 				0FCF4F2D5ED0442396CF817C /* CDVInAppBrowser.m in Sources */,
+				D0CAF81D19E64F0000CFD78C /* DGGStreamWatcher.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

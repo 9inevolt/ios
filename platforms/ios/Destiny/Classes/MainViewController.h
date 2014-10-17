@@ -29,8 +29,9 @@
 #import <Cordova/CDVCommandDelegateImpl.h>
 #import <Cordova/CDVCommandQueue.h>
 #import <ALMoviePlayerController/ALMoviePlayerController.h>
+#import "DGGStreamWatcher.h"
 
-@interface MainViewController : CDVViewController <ALMoviePlayerControllerDelegate>
+@interface MainViewController : CDVViewController <ALMoviePlayerControllerDelegate, DGGStreamWatcherDelegate>
 
 @property (nonatomic, readonly) ALMoviePlayerController *player;
 
